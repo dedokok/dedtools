@@ -1,0 +1,42 @@
+package com.dedokok.utils.render.postprocess;
+
+import com.dedokok.events.render.Render2DEvent;
+import com.dedokok.utils.PreInit;
+import meteordevelopment.orbit.EventHandler;
+
+import static com.dedokok.DedTools.mc;
+
+public class PostProcessShaders {
+    public static EntityShader CHAMS;
+    public static EntityShader ENTITY_OUTLINE;
+    public static PostProcessShader STORAGE_OUTLINE;
+
+    private PostProcessShaders() {}
+
+
+
+    public static void beginRender() {
+        CHAMS.clearTexture();
+        ENTITY_OUTLINE.clearTexture();
+        STORAGE_OUTLINE.clearTexture();
+    }
+
+    public static void submitEntityVertices() {
+        CHAMS.submitVertices();
+        ENTITY_OUTLINE.submitVertices();
+    }
+
+    @EventHandler
+    private static void onRender(Render2DEvent event) {
+        CHAMS.render();
+        ENTITY_OUTLINE.render();
+    }
+
+    public static void onResized(int width, int height) {
+        if (mc == null) return;
+
+        CHAMS.onResized(width, height);
+        ENTITY_OUTLINE.onResized(width, height);
+        STORAGE_OUTLINE.onResized(width, height);
+    }
+}
