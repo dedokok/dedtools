@@ -7,6 +7,7 @@ package com.dedokok.systems.modules;
 
 import com.dedokok.DedTools;
 import com.dedokok.gui.GuiTheme;
+import com.dedokok.gui.WidgetScreen;
 import com.dedokok.gui.widgets.WWidget;
 import com.dedokok.settings.Settings;
 import com.dedokok.systems.config.Config;
@@ -47,7 +48,17 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     public boolean chatFeedback = true;
     public boolean favorite = false;
 
-    public Module(Category category, String name, String description, String... aliases) {
+    public boolean needReload = false;
+    public String buttonTooltip;
+    public String textLeftButton;
+
+    public WidgetScreen screen;
+
+    public void setBT(String string){
+        this.buttonTooltip=string;
+    }
+
+    public Module(Category category, String name, String description, WidgetScreen screen, String... aliases) {
         if (name.contains(" "))
             DedTools.LOG.warn("Module '{}' contains invalid characters in its name making it incompatible with Meteor Client commands.", name);
 
@@ -58,22 +69,40 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
         this.description = description;
         this.aliases = aliases;
         this.color = Color.fromHsv(Utils.random(0.0, 360.0), 0.35, 1);
+        this.screen=screen;
 
 
     }
 
-    public Module(Category category, String name, String desc) {
-        this(category, name, desc, new String[0]);
+    public Module(Category category, String name, String desc, WidgetScreen screen) {
+        this(category, name, desc, screen, new String[0]);
     }
 
     public WWidget getWidget(GuiTheme theme) {
         return null;
     }
 
+    public void reload(){
+        if(screen==null)return;
+        screen.reload();
+    }
+
+
+    public void setWidgetScreen(WidgetScreen WS){
+        this.screen = WS;
+    }
+
     public void onActivate() {
     }
 
     public void onDeactivate() {
+    }
+
+    public void setNeedReload(boolean needClose){
+        this.needReload = needClose;
+    }
+    public boolean getNeedReload(){
+        return needReload;
     }
 
     public void toggle() {
@@ -109,7 +138,7 @@ public abstract class Module implements ISerializable<Module>, Comparable<Module
     public void sendToggledMsg() {
         if (Config.get().chatFeedback.get() && chatFeedback) {
             ChatUtils.forceNextPrefixClass(getClass());
-            ChatUtils.sendMsg(this.hashCode(), ChatFormatting.GRAY, "Toggled (highlight)%s(default) %s(default).", title, isActive() ? ChatFormatting.GREEN + "on" : ChatFormatting.RED + "off");
+            //ChatUtils.sendMsg(this.hashCode(), ChatFormatting.GRAY, "Toggled (highlight)%s(default) %s(default).", title, isActive() ? ChatFormatting.GREEN + "on" : ChatFormatting.RED + "off");
         }
     }
 

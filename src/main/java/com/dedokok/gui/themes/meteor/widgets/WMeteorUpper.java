@@ -1,0 +1,21 @@
+/*
+ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
+ * Copyright (c) Meteor Development.
+ */
+
+package com.dedokok.gui.themes.meteor.widgets;
+
+import com.dedokok.gui.renderer.GuiRenderer;
+import com.dedokok.gui.themes.meteor.MeteorWidget;
+import com.dedokok.gui.widgets.WTooltip;
+
+public class WMeteorUpper extends WTooltip implements MeteorWidget {
+    public WMeteorUpper(String text) {
+        super(text);
+    }
+
+    @Override
+    protected void onRender(GuiRenderer renderer, double mouseX, double mouseY, double delta) {
+        renderer.quad(this, theme().backgroundColor.get());
+    }
+}

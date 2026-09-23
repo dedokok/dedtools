@@ -23,6 +23,8 @@ repositories {
 	}
 }
 
+
+
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
@@ -39,6 +41,7 @@ dependencies {
 	implementation include("dev.firstdark.discordrpc:discord-rpc:1.0.6")
 	implementation include('org.reflections:reflections:0.10.2')
 	implementation include('org.javassist:javassist:3.29.2-GA')
+
 }
 
 processResources {

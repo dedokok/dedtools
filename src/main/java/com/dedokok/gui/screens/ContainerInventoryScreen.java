@@ -129,34 +129,8 @@ public class ContainerInventoryScreen extends Screen {
         }
     }
 
-//    @Override
-//    public boolean mouseClicked(MouseButtonEvent click, boolean doubled) {
-//        BetterTooltips tooltips = Modules.get().get(BetterTooltips.class);
-//
-//        ItemStack stack = getSelectedItem((int) click.x(), (int) click.y());
-//        if (tooltips.shouldOpenContents(click)) {
-//            return tooltips.openContent(stack);
-//        }
-//
-//        return false;
-//    }
-//
-//    @Override
-//    public boolean keyPressed(@NonNull KeyEvent input) {
-//        BetterTooltips tooltips = Modules.get().get(BetterTooltips.class);
-//
-//        ItemStack stack = getSelectedItem((int) mc.mouseHandler.getScaledXPos(mc.getWindow()), (int) mc.mouseHandler.getScaledYPos(mc.getWindow()));
-//        if (tooltips.shouldOpenContents(input)) {
-//            return tooltips.openContent(stack);
-//        }
-//
-//        if (input.key() == GLFW.GLFW_KEY_ESCAPE || mc.options.keyInventory.matches(input)) {
-//            onClose();
-//            return true;
-//        }
-//
-//        return false;
-//    }
+
+
 
     private ItemStack getSelectedItem(int mouseX, int mouseY) {
         if (mouseX < baseX || mouseX > baseX + 9 * SLOT_SIZE) return ItemStack.EMPTY;

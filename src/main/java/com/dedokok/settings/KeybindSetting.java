@@ -45,8 +45,12 @@ public class KeybindSetting extends Setting<Keybind> {
 
     @EventHandler(priority = EventPriority.HIGH)
     private void onKey(KeyInputEvent event) {
-        if (event.action == KeyAction.Release && get().matches(event.input) && (module == null || module.isActive()) && action != null) {
-            action.run();
+        if (event.action == KeyAction.Release){
+            if(get().matches(event.input)) {
+                if (action != null) {
+                    action.run();
+                }
+            }
         }
     }
 

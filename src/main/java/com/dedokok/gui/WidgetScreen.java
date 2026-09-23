@@ -5,6 +5,8 @@
 
 package com.dedokok.gui;
 
+import com.dedokok.gui.screens.settings.VeinsListSettingScreen;
+import com.dedokok.systems.modules.Feature.CoordMaster;
 import com.mojang.blaze3d.platform.MacosUtil;
 import com.dedokok.DedTools;
 import com.dedokok.gui.renderer.GuiDebugRenderer;
@@ -46,7 +48,7 @@ public abstract class WidgetScreen extends Screen {
     protected Runnable enterAction;
 
     public Screen parent;
-    private final WContainer root;
+    protected final WContainer root;
 
     protected final GuiTheme theme;
 
@@ -55,7 +57,7 @@ public abstract class WidgetScreen extends Screen {
     private boolean onClose;
     private boolean debug;
 
-    private boolean closing;
+    protected boolean closing;
 
     private double lastMouseX, lastMouseY;
 
@@ -83,6 +85,13 @@ public abstract class WidgetScreen extends Screen {
         }
     }
 
+
+    public GuiRenderer getRenderer() {
+        return RENDERER;
+    }
+
+
+
     public <W extends WWidget> Cell<W> add(W widget) {
         return root.add(widget);
     }
@@ -97,6 +106,7 @@ public abstract class WidgetScreen extends Screen {
 
     @Override
     protected void init() {
+        GuiHitTest.clear();
         DedTools.EVENT_BUS.subscribe(this);
 
         closed = false;
@@ -130,6 +140,13 @@ public abstract class WidgetScreen extends Screen {
         mouseX *= s;
         mouseY *= s;
 
+        MouseButtonEvent px = new MouseButtonEvent(mouseX, mouseY, click.buttonInfo());
+
+        // новое: пересылаем клик в меню, если оно открыто
+        if (VeinsListSettingScreen.isRender && VeinsListSettingScreen.veinChoose != null) {
+            if (VeinsListSettingScreen.veinChoose.mouseClicked(px, doubled)) return true;
+        }
+
         // Unfocus all text boxes that are not under the mouse cursor
         loopWidgets(root, widget -> {
             if (widget instanceof WTextBox textBox && textBox.isFocused() && !textBox.mouseOver) {
@@ -151,6 +168,14 @@ public abstract class WidgetScreen extends Screen {
         mouseX *= s;
         mouseY *= s;
 
+
+        MouseButtonEvent px = new MouseButtonEvent(mouseX, mouseY, click.buttonInfo());
+
+        // новое
+        if (VeinsListSettingScreen.isRender && VeinsListSettingScreen.veinChoose != null) {
+            VeinsListSettingScreen.veinChoose.mouseReleased(px);
+        }
+
         if (debug && click.button() == GLFW_MOUSE_BUTTON_RIGHT)
             DEBUG_RENDERER.mouseReleased(root, new MouseButtonEvent(mouseX, mouseY, click.buttonInfo()), 0);
 
@@ -164,6 +189,10 @@ public abstract class WidgetScreen extends Screen {
         double s = mc.getWindow().getGuiScale();
         mouseX *= s;
         mouseY *= s;
+
+        if (VeinsListSettingScreen.isRender && VeinsListSettingScreen.veinChoose != null) {
+            VeinsListSettingScreen.veinChoose.mouseMoved(mouseX,mouseY,lastMouseX,lastMouseY);
+        }
 
         root.mouseMoved(mouseX, mouseY, lastMouseX, lastMouseY);
 
@@ -202,6 +231,11 @@ public abstract class WidgetScreen extends Screen {
         if (locked) return false;
 
         boolean shouldReturn = root.keyPressed(input) || super.keyPressed(input);
+//        if(this instanceof VeinsListSettingScreen){
+//
+//            System.out.println("shouldreturn: "+shouldReturn+". Key = "+input.key());
+//            new Throwable("key pressed").printStackTrace();
+//        }
         if (shouldReturn) return true;
 
         // Select next text box if TAB was pressed
@@ -267,6 +301,8 @@ public abstract class WidgetScreen extends Screen {
         mouseX *= s;
         mouseY *= s;
 
+        GuiHitTest.update(root, mouseX, mouseY);   // <-- новое
+
         animProgress += (delta / 20 * 14) * (closing ? -1 : 1);
         animProgress = Mth.clamp(animProgress, 0, 1);
 
@@ -290,17 +326,31 @@ public abstract class WidgetScreen extends Screen {
         RENDERER.setAlpha(1);
         RENDERER.end();
 
-        boolean tooltip = RENDERER.renderTooltip(graphics, mouseX, mouseY, delta / 20);
+        //boolean tooltip = RENDERER.renderTooltip(graphics, mouseX, mouseY, delta / 20);
+
 
         if (debug) {
             DEBUG_RENDERER.render(root);
-            if (tooltip) DEBUG_RENDERER.render(RENDERER.tooltipWidget);
+            //if (tooltip) DEBUG_RENDERER.render(RENDERER.tooltipWidget);
         }
 
         Utils.scaledProjection();
 
         runAfterRenderTasks();
     }
+
+
+    public void renderTooltipOnly(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta){
+        int s = mc.getWindow().getGuiScale();
+        mouseX *= s;
+        mouseY *= s;
+
+        Utils.unscaledProjection();
+        RENDERER.theme = theme;
+        RENDERER.renderTooltip(graphics, mouseX, mouseY, delta);
+        Utils.scaledProjection();
+    }
+
 
     protected void runAfterRenderTasks() {
         if (taskAfterRender != null) {
@@ -329,6 +379,7 @@ public abstract class WidgetScreen extends Screen {
     public void removed() {
         if (!closed || lockedAllowClose) {
             closed = true;
+            GuiHitTest.clear();
             onClosed();
 
             Input.setCursorStyle(CursorStyle.Default);
@@ -371,7 +422,7 @@ public abstract class WidgetScreen extends Screen {
         onClose = preOnClose;
     }
 
-    private void loopWidgets(WWidget widget, Consumer<WWidget> action) {
+    protected void loopWidgets(WWidget widget, Consumer<WWidget> action) {
         action.accept(widget);
 
         if (widget instanceof WContainer wContainer) {

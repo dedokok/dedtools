@@ -42,6 +42,9 @@ import static com.dedokok.DedTools.mc;
 public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
     private static final SettingColor WHITE = new SettingColor();
 
+    private Settings setts;
+    private String filts;
+
     public DefaultSettingsWidgetFactory(GuiTheme theme) {
         super(theme);
 
@@ -50,15 +53,18 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         factories.put(DoubleSetting.class, (table, setting) -> doubleW(table, (DoubleSetting) setting));
         factories.put(StringSetting.class, (table, setting) -> stringW(table, (StringSetting) setting));
         factories.put(EnumSetting.class, (table, setting) -> enumW(table, (EnumSetting<? extends Enum<?>>) setting));
+        //factories.put(StringEnumSetting.class, (table, setting) -> stringEnumW(table, (StringEnumSetting<? extends List<?>>) setting));
         factories.put(ProvidedStringSetting.class, (table, setting) -> providedStringW(table, (ProvidedStringSetting) setting));
         factories.put(GenericSetting.class, (table, setting) -> genericW(table, (GenericSetting<?>) setting));
         factories.put(ColorSetting.class, (table, setting) -> colorW(table, (ColorSetting) setting));
         factories.put(KeybindSetting.class, (table, setting) -> keybindW(table, (KeybindSetting) setting));
         factories.put(BlockSetting.class, (table, setting) -> blockW(table, (BlockSetting) setting));
         factories.put(BlockListSetting.class, (table, setting) -> blockListW(table, (BlockListSetting) setting));
+        factories.put(VeinsListSetting.class, (table, setting) -> veinsListW(table, (VeinsListSetting) setting));
         factories.put(ItemSetting.class, (table, setting) -> itemW(table, (ItemSetting) setting));
         factories.put(ItemListSetting.class, (table, setting) -> itemListW(table, (ItemListSetting) setting));
         factories.put(EntityTypeListSetting.class, (table, setting) -> entityTypeListW(table, (EntityTypeListSetting) setting));
+        factories.put(TestSetting.class, (table, setting) -> testSettingScreenW(table, (TestSetting) setting));
         factories.put(EnchantmentListSetting.class, (table, setting) -> enchantmentListW(table, (EnchantmentListSetting) setting));
         factories.put(ModuleListSetting.class, (table, setting) -> moduleListW(table, (ModuleListSetting) setting));
         factories.put(PacketListSetting.class, (table, setting) -> packetListW(table, (PacketListSetting) setting));
@@ -71,16 +77,23 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         factories.put(BlockDataSetting.class, (table, setting) -> blockDataW(table, (BlockDataSetting<?>) setting));
         factories.put(PotionSetting.class, (table, setting) -> potionW(table, (PotionSetting) setting));
         factories.put(StringListSetting.class, (table, setting) -> stringListW(table, (StringListSetting) setting));
+        factories.put(PlayerNotesListSetting.class, (table, setting) -> playerNotesListW(table, (PlayerNotesListSetting) setting));
         factories.put(BlockPosSetting.class, (table, setting) -> blockPosW(table, (BlockPosSetting) setting));
         factories.put(ColorListSetting.class, (table, setting) -> colorListW(table, (ColorListSetting) setting));
         factories.put(FontFaceSetting.class, (table, setting) -> fontW(table, (FontFaceSetting) setting));
         factories.put(Vector3dSetting.class, (table, setting) -> vector3dW(table, (Vector3dSetting) setting));
         factories.put(KeyboardHud.CustomKeyListSetting.class, (table, setting) -> customKeyListW(table, (KeyboardHud.CustomKeyListSetting) setting));
         factories.put(FileSetting.class, (table, setting) -> fileW(table, (FileSetting) setting));
+        factories.put(ButtonSetting.class,(table,setting)->buttonW(table, (ButtonSetting) setting));
     }
 
     @Override
     public WWidget create(GuiTheme theme, Settings settings, String filter) {
+        if(setts == null) {
+            setts=settings;
+            filts=filter;
+        }
+
         WVerticalList list = theme.verticalList();
 
         List<RemoveInfo> removeInfoList = new ArrayList<>();
@@ -178,6 +191,8 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         reset(table, setting, () -> edit.set(setting.get()));
     }
 
+    //private void buttonW()
+
     private void doubleW(WTable table, DoubleSetting setting) {
         WDoubleEdit edit = theme.doubleEdit(setting.get(), setting.min, setting.max, setting.sliderMin, setting.sliderMax, setting.decimalPlaces, setting.noSlider);
         table.add(edit).expandX();
@@ -199,13 +214,35 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
 
         WTextBox textBox = cell.expandX().widget();
         textBox.action = () -> setting.set(textBox.get());
+        textBox.instantTooltips=true;
 
         reset(table, setting, () -> textBox.set(setting.get()));
+    }
+
+    private void buttonW(WTable table,ButtonSetting setting){
+        WHorizontalList list = table.add(theme.horizontalList()).expandX().widget();
+
+        WButton button = list.add(theme.button(GuiRenderer.FAVORITE_YES)).expandX().widget();
+        button.tooltip = setting.description;
+
+        button.width=50;
+        button.height=setting.height;
+        button.instantTooltips=true;
+
+
+        button.action = () -> {
+            setting.onChanged();
+        };
     }
 
     private void stringListW(WTable table, StringListSetting setting) {
         WTable wtable = table.add(theme.table()).expandX().widget();
         StringListSetting.fillTable(theme, wtable, setting);
+    }
+
+    private void playerNotesListW(WTable table, PlayerNotesListSetting setting) {
+        WTable wtable = table.add(theme.table()).expandX().widget();
+        PlayerNotesListSetting.fillTable(theme, wtable, setting);
     }
 
     private <T extends Enum<?>> void enumW(WTable table, EnumSetting<T> setting) {
@@ -214,6 +251,13 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
 
         reset(table, setting, () -> dropdown.set(setting.get()));
     }
+
+//    private <T extends List<?>> void stringEnumW(WTable table, StringEnumSetting<T> setting) {
+//        WDropdown<T> dropdown = table.add(theme.dropdownList(setting.get())).expandCellX().widget();
+//        dropdown.action = () -> setting.set(dropdown.get());
+//
+//        reset(table, setting, () -> dropdown.set(setting.get()));
+//    }
 
     private void providedStringW(WTable table, ProvidedStringSetting setting) {
         WDropdown<String> dropdown = table.add(theme.dropdown(setting.supplier.get(), setting.get())).expandCellX().widget();
@@ -282,6 +326,10 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         selectW(table, setting, () -> mc.gui.setScreen(new BlockListSettingScreen(theme, setting)));
     }
 
+    private void veinsListW(WTable table, VeinsListSetting setting){
+        selectW2(table, setting, () -> mc.gui.setScreen(new VeinsListSettingScreen(theme, setting)));
+    }
+
     private void itemW(WTable table, ItemSetting setting) {
         WHorizontalList list = table.add(theme.horizontalList()).expandX().widget();
 
@@ -304,6 +352,10 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
 
     private void entityTypeListW(WTable table, EntityTypeListSetting setting) {
         selectW(table, setting, () -> mc.gui.setScreen(new EntityTypeListSettingScreen(theme, setting)));
+    }
+
+    private void testSettingScreenW(WTable table, TestSetting setting) {
+        selectW(table, setting, () -> mc.gui.setScreen(new TestSettingScreen(theme, setting)));
     }
 
     private void enchantmentListW(WTable table, EnchantmentListSetting setting) {
@@ -519,6 +571,23 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         button.action = action;
 
         if (addCount) c2.add(new WSelectedCountLabel(setting).color(theme.textSecondaryColor()));
+
+        reset(c, setting, null);
+    }
+
+    private void selectW2(WContainer c, Setting<?> setting, Runnable action) {
+        //boolean addCount = WSelectedCountLabel.getSize(setting) != -1;
+
+        WContainer c2 = c;
+//        if (addCount) {
+//            c2 = c.add(theme.horizontalList()).expandCellX().widget();
+//            ((WHorizontalList) c2).spacing *= 2;
+//        }
+
+        WButton button = c2.add(theme.button("Open")).expandCellX().widget();
+        button.action = action;
+
+        //if (addCount) c2.add(new WSelectedCountLabel(setting).color(theme.textSecondaryColor()));
 
         reset(c, setting, null);
     }

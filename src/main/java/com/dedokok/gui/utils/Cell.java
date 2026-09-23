@@ -189,4 +189,6 @@ public class Cell<T extends WWidget> {
     private double s(double value) {
         return widget.theme.scale(value);
     }
+
+
 }

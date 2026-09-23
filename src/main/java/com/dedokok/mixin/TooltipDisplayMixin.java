@@ -15,4 +15,6 @@ import org.spongepowered.asm.mixin.injection.At;
 @Mixin(TooltipDisplay.class)
 public abstract class TooltipDisplayMixin {
 
+
+
 }

@@ -30,6 +30,7 @@ import com.dedokok.systems.modules.Module;
 import com.dedokok.utils.Utils;
 import com.dedokok.utils.misc.MeteorStarscript;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.*;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
 import net.minecraft.client.gui.screens.options.*;
@@ -52,8 +53,78 @@ public class DiscordPresence extends Module {
         Sequential
     }
 
+
+
+    private final SettingGroup options = settings.createGroup("Optiongs");
     private final SettingGroup sgLine1 = settings.createGroup("Line 1");
     private final SettingGroup sgLine2 = settings.createGroup("Line 2");
+
+
+    //options
+    private final Setting<String> appIDString = options.add(new StringSetting.Builder()
+            .name("applicationID")
+            .description("Your discord Application ID.")
+            .defaultValue("1538291145426075768")
+            .onChanged(_ -> recompileLine1())
+            .renderer(StarscriptTextBoxRenderer.class)
+            .build()
+    );
+
+    private final Setting<Boolean> enableButtonOneOption = options.add(new BoolSetting.Builder()
+            .name("enable-button-one")
+            .description("Enable your URL button 1.")
+            .defaultValue(true)
+            .onChanged(_ -> recompileLine1())
+            .build()
+    );
+    private final Setting<String> buttonOneURLOption = options.add(new StringSetting.Builder()
+            .name("button-one-url")
+            .description("URL you can open with button click.")
+            .defaultValue("https://t.me/dedushka_11")
+            .onChanged(_ -> recompileLine1())
+            .renderer(StarscriptTextBoxRenderer.class)
+            .visible(enableButtonOneOption::get)
+            .build()
+    );
+    private final Setting<String> buttonOneNameOption = options.add(new StringSetting.Builder()
+            .name("button-one-name")
+            .description("Button 1 name. Text on button in presence.")
+            .defaultValue("My telegram")
+            .onChanged(_ -> recompileLine1())
+            .renderer(StarscriptTextBoxRenderer.class)
+            .visible(enableButtonOneOption::get)
+            .build()
+    );
+
+    private final Setting<Boolean> enableButtonTwoOption = options.add(new BoolSetting.Builder()
+            .name("enable-button-two")
+            .description("Enable your second URL button.")
+            .defaultValue(true)
+            .onChanged(_ -> recompileLine1())
+            .build()
+    );
+    private final Setting<String> buttonTwoURLOption = options.add(new StringSetting.Builder()
+            .name("button-two-url")
+            .description("URL you can open with button click.")
+            .defaultValue("https://t.me/dedushka_11")
+            .onChanged(_ -> recompileLine1())
+            .renderer(StarscriptTextBoxRenderer.class)
+            .visible(enableButtonTwoOption::get)
+            .build()
+    );
+    private final Setting<String> buttonTwoNameOption = options.add(new StringSetting.Builder()
+            .name("button-two-name")
+            .description("Button 2 name. Text on button in presence.")
+            .defaultValue("My telegram")
+            .onChanged(_ -> recompileLine1())
+            .renderer(StarscriptTextBoxRenderer.class)
+            .visible(enableButtonTwoOption::get)
+
+            .build()
+    );
+
+
+
 
     // Line 1
 
@@ -136,7 +207,7 @@ private static final DiscordRpc rpc = new DiscordRpc();
     }
 
     public DiscordPresence() {
-        super(Categories.Feature, "discord-presence", "Displays Meteor as your presence on Discord.");
+        super(Categories.Feature, "discord-presence", "Displays DedTools as your presence on Discord.",null);
 
         runInMainMenu = true;
     }
@@ -147,14 +218,7 @@ private static final DiscordRpc rpc = new DiscordRpc();
         @Override
         public void ready(User user) {
             System.out.println("Ready");
-//            DiscordRichPresence presence = DiscordRichPresence.builder()
-//                    .details("Hello World")
-//                    .largeImageKey("gear")
-//                    .activityType(ActivityType.WATCHING)
-//                    .button(DiscordRichPresence.RPCButton.of("Test", "https://google.com"))
-//                    .build();
-//
-//            rpc.updatePresence(presence);
+            //enableDiscordPresence();
             System.out.println(user.getUsername());
         }
 
@@ -184,22 +248,22 @@ private static final DiscordRpc rpc = new DiscordRpc();
         customStates.remove(packageName);
     }
 
-    @Override
-    public void onActivate() {
+
+
+    public void enableDiscordPresence(){
+        ticks=0;
         try{
             startTimestamp = System.currentTimeMillis() / 1000L;
-            rpc.init("айди приложения сюда", handler, false);
+            String applicationID = appIDString.get();
+            rpc.init(applicationID, handler, false);
         }
         catch(Exception e){
             System.out.println("no");
         }
 
-        //rpc.setStart(System.currentTimeMillis() / 1000L);
-
 
         String largeText = "%s %s".formatted(DedTools.NAME, DedTools.VERSION);
         largeText += " Build: #42";
-        //rpc.setLargeImage("meteor_client", largeText);
         largeImageKey="dedushka_1_1";
 
         currentSmallImage = SmallImage.Snail;
@@ -214,6 +278,12 @@ private static final DiscordRpc rpc = new DiscordRpc();
 
         line1I = 0;
         line2I = 0;
+    }
+
+
+    @Override
+    public void onActivate() {
+        enableDiscordPresence();
     }
 
     @Override
@@ -244,6 +314,7 @@ private static final DiscordRpc rpc = new DiscordRpc();
     @EventHandler
     private void onTick(TickEvent.Post event) {
         boolean update = false;
+        //System.out.println("123");
 
         // Image
         if (ticks >= 200 || forceUpdate) {
@@ -330,21 +401,37 @@ private static final DiscordRpc rpc = new DiscordRpc();
         //if (update) DiscordIPC.setActivity(rpc);
 
         if (update) {
-            DiscordRichPresence presence = DiscordRichPresence.builder()
-                    .details(details)
-                    .state(state)
-                    .largeImageKey(largeImageKey)
-                    .smallImageKey(smallImageKey)
-                    .activityType(ActivityType.PLAYING)
-                    .startTimestamp(startTimestamp)
-                    .button(DiscordRichPresence.RPCButton.of("Туса Джуса", "https://music.yandex.ru/album/43265732?utm_source=web&utm_medium=copy_link"))
-                    .build();
-
-            rpc.updatePresence(presence);
+            updateDiscordPresence();
         }
 
         forceUpdate = false;
         lastWasInMainMenu = !Utils.canUpdate();
+    }
+
+    public void updateDiscordPresence(){
+        Boolean enableButtonOne = enableButtonOneOption.get();
+        Boolean enableButtonTwo = enableButtonTwoOption.get();
+
+
+        DiscordRichPresence.DiscordRichPresenceBuilder builder = DiscordRichPresence.builder()
+                .details(details)
+                .state(state)
+                .largeImageKey(largeImageKey)
+                .smallImageKey(smallImageKey)
+                .activityType(ActivityType.PLAYING)
+                .startTimestamp(startTimestamp);
+
+        if(enableButtonOne){
+            String buttonOneName = buttonOneNameOption.get();
+            String buttonOneURL = buttonOneURLOption.get();
+            builder.button(DiscordRichPresence.RPCButton.of(buttonOneName, buttonOneURL));
+        }
+        if(enableButtonTwo){
+            String buttonTwoName = buttonTwoNameOption.get();
+            String buttonTwoURL = buttonTwoURLOption.get();
+            builder.button(DiscordRichPresence.RPCButton.of(buttonTwoName, buttonTwoURL));
+        }
+        rpc.updatePresence(builder.build());
     }
 
     @EventHandler
@@ -359,6 +446,8 @@ private static final DiscordRpc rpc = new DiscordRpc();
 
         return help;
     }
+
+
 
     private enum SmallImage {
         MineGame("minegame", "MineGame159"),
@@ -381,5 +470,9 @@ private static final DiscordRpc rpc = new DiscordRpc();
             if (this == MineGame) return Snail;
             return MineGame;
         }
+    }
+
+    public void onStopEvent(Minecraft client){
+        rpc.shutdown();
     }
 }

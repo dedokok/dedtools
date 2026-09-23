@@ -4,6 +4,7 @@ package com.dedokok.gui.widgets;/*
  */
 
 
+import com.dedokok.gui.GuiHitTest;
 import com.dedokok.gui.GuiTheme;
 import com.dedokok.gui.renderer.GuiRenderer;
 import com.dedokok.gui.utils.BaseWidget;
@@ -25,8 +26,10 @@ public abstract class WWidget implements BaseWidget {
 
     public boolean mouseOver;
     public boolean focused;
-    protected boolean instantTooltips;
+    public boolean instantTooltips;
     protected double mouseOverTimer;
+
+    public int layer = 0;
 
     public void init() {
     }
@@ -72,6 +75,20 @@ public abstract class WWidget implements BaseWidget {
 
     }
 
+    // доступ к parent без его публикации
+    public boolean isAncestorOrSelfOf(WWidget other) {
+        for (WWidget p = other; p != null; p = p.parent) {
+            if (p == this) return true;
+        }
+        return false;
+    }
+    /** Чистая проверка по прямоугольнику, без учёта перекрытия другими виджетами. */
+    public boolean isOverRaw(double x, double y) {
+        return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
+    }
+
+
+
     // Rendering
 
     public boolean render(GuiRenderer renderer, double mouseX, double mouseY, double delta) {
@@ -79,8 +96,9 @@ public abstract class WWidget implements BaseWidget {
 
         if (isOver(mouseX, mouseY)) {
             mouseOverTimer += delta;
+            if (mouseOverTimer > 0 && tooltip != null) {
 
-            if ((instantTooltips || mouseOverTimer >= 1) && tooltip != null) {
+            //if ((instantTooltips || mouseOverTimer >= 1) && tooltip != null) {
                 WView view = getView();
                 if (view == null || view.mouseOver) renderer.tooltip(tooltip);
             }
@@ -114,6 +132,17 @@ public abstract class WWidget implements BaseWidget {
     }
 
     public void mouseMoved(double mouseX, double mouseY, double lastMouseX, double lastMouseY) {
+        //System.out.println(this.getClass().getSimpleName());
+        if(this.getClass().getSimpleName().equals("WButton")) {
+            int a = 0;
+            a++;
+        }
+        if(layer==2){
+            //System.out.println("layer 2 : "+this.getClass().getSimpleName());
+
+            int a = 0;
+            a++;
+        }
         mouseOver = isOver(mouseX, mouseY);
         onMouseMoved(mouseX, mouseY, lastMouseX, lastMouseY);
     }
@@ -160,7 +189,7 @@ public abstract class WWidget implements BaseWidget {
         if (root != null) root.invalidate();
     }
 
-    protected WWidget getRoot() {
+    public WWidget getRoot() {
         return parent != null ? parent.getRoot() : (this instanceof WRoot ? this : null);
     }
 
@@ -168,9 +197,23 @@ public abstract class WWidget implements BaseWidget {
         if (this instanceof WView view) return view;
         return parent != null ? parent.getView() : null;
     }
-
     public boolean isOver(double x, double y) {
-        return x >= this.x && x <= this.x + width && y >= this.y && y <= this.y + height;
+
+        if(isOverRaw(x, y)){
+//            if(layer==2){
+//                System.out.println("прошёл в isOverRaw: "+this.getClass().getSimpleName());
+//            }
+            if(!GuiHitTest.isBlocked(this, x, y)){
+//                if(layer==2){
+//                    System.out.println("вернул isOver = true; "+this.getClass().getSimpleName());
+//                }
+                return true;
+            }
+        }
+//        if(layer==2){
+//            System.out.println("вернул isOver = false; "+this.getClass().getSimpleName());
+//        }
+        return false;
     }
 
     public boolean isFocused() {

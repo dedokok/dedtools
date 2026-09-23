@@ -1,0 +1,24 @@
+/*
+ * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
+ * Copyright (c) Meteor Development.
+ */
+
+package com.dedokok.mixin;
+
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
+import com.dedokok.systems.modules.Modules;
+import net.minecraft.client.renderer.fog.environment.MobEffectFogEnvironment;
+import net.minecraft.core.Holder;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffects;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+
+@Mixin(MobEffectFogEnvironment.class)
+public abstract class MobEffectFogEnvironmentMixin {
+    @Shadow
+    public abstract Holder<MobEffect> getMobEffect();
+
+
+}

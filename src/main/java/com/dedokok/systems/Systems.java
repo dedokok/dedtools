@@ -61,12 +61,12 @@ public class Systems {
     }
 
     public static void save(File folder) {
-        long start = java.lang.System.currentTimeMillis();
-        DedTools.LOG.info("Saving");
+        //long start = java.lang.System.currentTimeMillis();
+         //DedTools.LOG.info("Saving");
 
         for (System<?> system : systems.values()) system.save(folder);
 
-        DedTools.LOG.info("Saved in {} milliseconds.", java.lang.System.currentTimeMillis() - start);
+        //DedTools.LOG.info("Saved in {} milliseconds.", java.lang.System.currentTimeMillis() - start);
     }
 
     public static void save() {

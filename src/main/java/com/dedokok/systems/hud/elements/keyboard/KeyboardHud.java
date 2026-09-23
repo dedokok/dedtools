@@ -5,11 +5,11 @@
 
 package com.dedokok.systems.hud.elements.keyboard;
 
-import com.dedokok.DedTools;
 import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.longs.LongList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import com.dedokok.DedTools;
 import com.dedokok.events.meteor.KeyInputEvent;
 import com.dedokok.events.meteor.MouseClickEvent;
 import com.dedokok.gui.GuiTheme;

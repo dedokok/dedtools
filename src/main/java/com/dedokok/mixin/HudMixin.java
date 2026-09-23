@@ -7,6 +7,7 @@ package com.dedokok.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.dedokok.systems.modules.Modules;
+
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.Hud;
@@ -21,4 +22,58 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(Hud.class)
 public abstract class HudMixin {
+    @Inject(method = "extractEffects", at = @At("HEAD"), cancellable = true)
+    private void onExtractStatusEffectOverlay(CallbackInfo ci) {
+    }
+
+    @Inject(method = "extractPortalOverlay", at = @At("HEAD"), cancellable = true)
+    private void onExtractPortalOverlay(GuiGraphicsExtractor graphics, float alpha, CallbackInfo ci) {
+    }
+
+    @ModifyArgs(method = "extractCameraOverlays", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Hud;extractTextureOverlay(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/resources/Identifier;F)V", ordinal = 0))
+    private void onExtractPumpkinOverlay(Args args) {
+    }
+
+    @ModifyArgs(method = "extractCameraOverlays", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Hud;extractTextureOverlay(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/resources/Identifier;F)V", ordinal = 1))
+    private void onExtractPowderedSnowOverlay(Args args) {
+    }
+
+    @Inject(method = "extractVignette", at = @At("HEAD"), cancellable = true)
+    private void onExtractVignetteOverlay(GuiGraphicsExtractor graphics, Entity camera, CallbackInfo ci) {
+    }
+
+    @Inject(method = "displayScoreboardSidebar", at = @At("HEAD"), cancellable = true)
+    private void onExtractScoreboardSidebar(GuiGraphicsExtractor graphics, Objective objective, CallbackInfo ci) {
+    }
+
+    @Inject(method = "extractScoreboardSidebar", at = @At("HEAD"), cancellable = true)
+    private void onExtractScoreboardSidebar(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    }
+
+    @Inject(method = "extractSpyglassOverlay", at = @At("HEAD"), cancellable = true)
+    private void onExtractSpyglassOverlay(GuiGraphicsExtractor graphics, float scale, CallbackInfo ci) {
+    }
+
+
+
+    @Inject(method = "extractCrosshair", at = @At("HEAD"), cancellable = true)
+    private void onExtractCrosshair(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    }
+
+    @Inject(method = "extractTitle", at = @At("HEAD"), cancellable = true)
+    private void onExtractTitle(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+    }
+
+    @Inject(method = "extractSelectedItemName", at = @At("HEAD"), cancellable = true)
+    private void onExtractHeldItemTooltip(GuiGraphicsExtractor graphics, CallbackInfo ci) {
+    }
+
+    @Inject(method = "onDisconnected", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/components/ChatComponent;clearMessages(Z)V"), cancellable = true)
+    private void onClear(CallbackInfo ci) {
+
+    }
+
+    @Inject(method = "extractConfusionOverlay", at = @At("HEAD"), cancellable = true)
+    private void onExtractNausea(GuiGraphicsExtractor graphics, float strength, CallbackInfo ci) {
+    }
 }

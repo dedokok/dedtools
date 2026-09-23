@@ -9,9 +9,11 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.dedokok.utils.render.color.Color;
 import com.dedokok.utils.world.Dir;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 
 public class Renderer3D {
     public final MeshBuilder lines;
@@ -238,4 +240,78 @@ public class Renderer3D {
         if (mode.lines()) boxLines(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, lineColor, excludeDir);
         if (mode.sides()) boxSides(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ, sideColor, excludeDir);
     }
+
+
+//    //circles
+//    public void circleLines(double cx, double cy, double cz, double radius, int segments, Color color) {
+//        lines.ensureCapacity(segments, segments * 2);
+//
+//        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+//        Vec3 right = camera.getLeftVector().mul(-1, -1, -1); // right = -left
+//        Vec3 up = camera.getUpVector();
+//
+//        int firstIndex = -1;
+//        int prevIndex = -1;
+//
+//        for (int i = 0; i < segments; i++) {
+//            double angle = 2 * Math.PI * i / segments;
+//            double cos = Math.cos(angle) * radius;
+//            double sin = Math.sin(angle) * radius;
+//
+//            double x = cx + right.x * cos + up.x * sin;
+//            double y = cy + right.y * cos + up.y * sin;
+//            double z = cz + right.z * cos + up.z * sin;
+//
+//            int index = lines.vec3(x, y, z).color(color).next();
+//
+//            if (i == 0) firstIndex = index;
+//            else lines.line(prevIndex, index);
+//
+//            prevIndex = index;
+//        }
+//
+//        lines.line(prevIndex, firstIndex);
+//    }
+//
+//    public void ring(double cx, double cy, double cz, double innerRadius, double outerRadius, int segments, Color color) {
+//        triangles.ensureCapacity(segments * 2, segments * 6);
+//
+//        Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+//        Vec3 right = camera.getLeftVector().mul(-1, -1, -1);
+//        Vec3 up = camera.getUpVector();
+//
+//        for (int i = 0; i < segments; i++) {
+//            double a1 = 2 * Math.PI * i / segments;
+//            double a2 = 2 * Math.PI * (i + 1) / segments;
+//
+//            double cos1 = Math.cos(a1), sin1 = Math.sin(a1);
+//            double cos2 = Math.cos(a2), sin2 = Math.sin(a2);
+//
+//            int i1 = triangles.vec3(
+//                    cx + right.x * cos1 * outerRadius + up.x * sin1 * outerRadius,
+//                    cy + right.y * cos1 * outerRadius + up.y * sin1 * outerRadius,
+//                    cz + right.z * cos1 * outerRadius + up.z * sin1 * outerRadius
+//            ).color(color).next();
+//
+//            int i2 = triangles.vec3(
+//                    cx + right.x * cos1 * innerRadius + up.x * sin1 * innerRadius,
+//                    cy + right.y * cos1 * innerRadius + up.y * sin1 * innerRadius,
+//                    cz + right.z * cos1 * innerRadius + up.z * sin1 * innerRadius
+//            ).color(color).next();
+//
+//            int i3 = triangles.vec3(
+//                    cx + right.x * cos2 * innerRadius + up.x * sin2 * innerRadius,
+//                    cy + right.y * cos2 * innerRadius + up.y * sin2 * innerRadius,
+//                    cz + right.z * cos2 * innerRadius + up.z * sin2 * innerRadius
+//            ).color(color).next();
+//
+//            int i4 = triangles.vec3(
+//                    cx + right.x * cos2 * outerRadius + up.x * sin2 * outerRadius,
+//                    cy + right.y * cos2 * outerRadius + up.y * sin2 * outerRadius,
+//                    cz + right.z * cos2 * outerRadius + up.z * sin2 * outerRadius
+//            ).color(color).next();
+//
+//            triangles.quad(i1, i2, i3, i4);
+//        }
+//    }
 }

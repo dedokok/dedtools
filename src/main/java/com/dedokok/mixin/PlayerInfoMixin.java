@@ -22,5 +22,10 @@ public abstract class PlayerInfoMixin {
     @Shadow
     public abstract GameProfile getProfile();
 
+    @Inject(method = "getSkin", at = @At("HEAD"), cancellable = true)
+    private void onGetTexture(CallbackInfoReturnable<PlayerSkin> cir) {
+        if (getProfile().name().equals(Minecraft.getInstance().getUser().getName())) {
 
+        }
+    }
 }

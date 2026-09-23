@@ -7,7 +7,6 @@ package com.dedokok.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyReceiver;
 import com.llamalad7.mixinextras.sugar.Local;
-
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
@@ -26,4 +25,6 @@ import java.util.function.Consumer;
 
 @Mixin(value = GuiGraphicsExtractor.class)
 public abstract class GuiGraphicsExtractorMixin {
+
+
 }

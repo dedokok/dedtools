@@ -7,6 +7,9 @@ package com.dedokok.utils.render;
 
 import com.dedokok.DedTools;
 import com.dedokok.events.render.Render3DEvent;
+import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.render.GuiRenderer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import com.dedokok.events.world.TickEvent;
 import com.dedokok.renderer.ShapeMode;
@@ -15,7 +18,9 @@ import com.dedokok.utils.misc.Pool;
 import com.dedokok.utils.render.color.Color;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.item.TrackingItemStackRenderState;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3x2fStack;
@@ -170,4 +175,5 @@ public class RenderUtils {
             lineColor.a = preLineA;
         }
     }
+
 }

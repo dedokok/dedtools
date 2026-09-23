@@ -50,7 +50,6 @@ public class StringSetting extends Setting<String> {
     @Override
     public String load(CompoundTag tag) {
         set(tag.getStringOr("value", ""));
-
         return get();
     }
 

@@ -4,6 +4,7 @@ package com.dedokok.events.render;/*
  */
 
 
+import com.dedokok.renderer.Renderer2D;
 import com.dedokok.utils.Utils;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 

@@ -5,7 +5,9 @@
 
 package com.dedokok.gui.screens;
 
+import com.dedokok.DedTools;
 import com.dedokok.events.meteor.ActiveModulesChangedEvent;
+import com.dedokok.events.meteor.InitWidgetEvent;
 import com.dedokok.events.meteor.ModuleBindChangedEvent;
 import com.dedokok.gui.GuiTheme;
 import com.dedokok.gui.WidgetScreen;
@@ -20,6 +22,7 @@ import com.dedokok.gui.widgets.containers.WSection;
 import com.dedokok.gui.widgets.pressable.WButton;
 import com.dedokok.gui.widgets.pressable.WCheckbox;
 import com.dedokok.gui.widgets.pressable.WFavorite;
+import com.dedokok.systems.modules.Feature.PlayersNoteBook;
 import com.dedokok.systems.modules.Module;
 import com.dedokok.systems.modules.Modules;
 import com.dedokok.utils.misc.NbtUtils;
@@ -30,29 +33,42 @@ import net.minecraft.nbt.CompoundTag;
 import java.util.Optional;
 
 import static com.dedokok.utils.Utils.getWindowWidth;
+import static com.dedokok.utils.Utils.squaredDistance;
 
 public class ModuleScreen extends WindowScreen {
-    private final Module module;
+    public final Module module;
 
     private WContainer settingsContainer;
     private WKeybind keybind;
     private WCheckbox active;
 
     public ModuleScreen(GuiTheme theme, Module module) {
+
         super(theme, theme.favorite(module.favorite), module.title);
         ((WFavorite) window.icon).action = () -> module.favorite = ((WFavorite) window.icon).checked;
 
+
         this.module = module;
+        this.window.width = 800;
     }
+
+
+
+
 
     @Override
     public void initWidgets() {
+
         // Description
         add(theme.label(module.description, getWindowWidth() / 2.0));
 
 
+        module.screen=this;
+
+
         // Settings
         if (!module.settings.groups.isEmpty()) {
+
             settingsContainer = add(theme.verticalList()).expandX().widget();
             settingsContainer.add(theme.settings(module.settings)).expandX();
         }
@@ -64,6 +80,7 @@ public class ModuleScreen extends WindowScreen {
             add(theme.horizontalSeparator()).expandX();
             Cell<WWidget> cell = add(widget);
             if (widget instanceof WContainer) cell.expandX();
+            DedTools.EVENT_BUS.post(InitWidgetEvent.get(widget));
         }
 
         // Bind
@@ -121,6 +138,7 @@ public class ModuleScreen extends WindowScreen {
             }
         };
         copy.tooltip = "Copy config";
+        //copy.set("123");
 
         WButton paste = sharing.add(theme.button(GuiRenderer.PASTE)).widget();
         paste.action = this::fromClipboard;

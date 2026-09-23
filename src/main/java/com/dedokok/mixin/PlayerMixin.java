@@ -11,7 +11,6 @@ import com.dedokok.DedTools;
 import com.dedokok.events.entity.DropItemsEvent;
 import com.dedokok.events.entity.player.ClipAtLedgeEvent;
 import com.dedokok.systems.modules.Modules;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -64,6 +63,8 @@ public abstract class PlayerMixin extends LivingEntity {
     private void onIsCreative(CallbackInfoReturnable<Boolean> cir) {
         if (mc.getConnection() == null) cir.setReturnValue(false);
     }
+
+
 
 
 }

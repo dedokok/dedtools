@@ -31,6 +31,8 @@ import com.dedokok.utils.misc.input.Input;
 import com.dedokok.utils.misc.input.KeyAction;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -65,6 +67,46 @@ public class Modules extends System<Modules> {
     public void init() {
         initFeauture();
     }
+
+    private void initFeauture() {
+        //add(new DiscordPresence());
+        DiscordPresence DP = new DiscordPresence();
+        ClientLifecycleEvents.CLIENT_STOPPING.register(DP::onStopEvent);
+
+        //add(new AutoReceiver());
+        AutoReceiver aR = new AutoReceiver();
+        ColourChatMessages CCM = new ColourChatMessages();
+        ClientReceiveMessageEvents.CHAT.register(aR::onChatMessage);
+        ClientReceiveMessageEvents.GAME.register(aR::onGameMessage);
+        ClientReceiveMessageEvents.MODIFY_GAME.register(CCM::onGameMessage);
+
+        AuxProtectClickTeleport APCT = new AuxProtectClickTeleport();
+        ClientReceiveMessageEvents.MODIFY_GAME.register(APCT::onGameMessage);
+
+        BlockBreakFinder BBF = new BlockBreakFinder();
+        ClientReceiveMessageEvents.ALLOW_GAME.register(BBF::onGameMessage);
+
+        MessageAnnouncement MA = new MessageAnnouncement();
+        ClientReceiveMessageEvents.GAME.register(MA::onGameMessage);
+
+
+        add(aR);
+        add(CCM);
+        add(BBF);
+        add(DP);
+        add(APCT);
+        add(MA);
+
+        add(new ShowRepairCost());
+        add(new PlayerTracker());
+        //add(new CoordMaster());
+        //add(new Spam());
+        add(new CirclePlayerCommand());
+        add(new PlayerStats());
+        add(new Patrol());
+        add(new PlayersNoteBook());
+    }
+
 
     @Override
     public void load(File folder) {
@@ -373,10 +415,5 @@ public class Modules extends System<Modules> {
     }
 
 
-    private void initFeauture() {
-        add(new SayHi());
-        add(new DiscordPresence());
-        //add(new Spam());
-    }
 
 }

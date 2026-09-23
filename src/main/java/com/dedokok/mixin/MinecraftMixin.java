@@ -5,6 +5,9 @@
 
 package com.dedokok.mixin;
 
+import com.dedokok.events.meteor.ChangeScreenEvent;
+import com.dedokok.gui.WidgetScreen;
+import com.dedokok.systems.Systems;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
@@ -21,9 +24,11 @@ import com.dedokok.mixininterface.IMinecraft;
 import com.dedokok.mixininterface.IVec3;
 import com.dedokok.systems.config.Config;
 import com.dedokok.systems.modules.Modules;
+
 import com.dedokok.utils.Utils;
 import com.dedokok.utils.misc.CPSUtils;
 import com.dedokok.utils.misc.MeteorStarscript;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.Screen;
@@ -106,29 +111,41 @@ public abstract class MinecraftMixin implements IMinecraft {
         firstFrame = true;
     }
 
-    @Inject(at = @At("HEAD"), method = "tick")
+    @Inject(method = "tick", at = @At("HEAD"))
     private void onPreTick(CallbackInfo ci) {
-        //OnlinePlayers.update();
-        if (mc.options.keyUse.isDown()) {
-            System.out.println(
-                    "[TICK] keyUse=true, screen=" + mc.gui.screen()
-            );
+        if (mc.gui.screen() != null) {
+            KeyMapping.releaseAll();
         }
+
         startUseItemCalled = false;
 
         Profiler.get().push(DedTools.MOD_ID + "_pre_update");
         DedTools.EVENT_BUS.post(TickEvent.Pre.get());
         Profiler.get().pop();
 
-        if (rightClick && !startUseItemCalled && gameMode != null) startUseItem();
+        if (rightClick && !startUseItemCalled && gameMode != null) {
+            startUseItem();
+        }
+
         rightClick = false;
     }
+
+
+    private static Screen prevScreen = null;
 
     @Inject(at = @At("TAIL"), method = "tick")
     private void onTick(CallbackInfo ci) {
         Profiler.get().push(DedTools.MOD_ID + "_post_update");
         DedTools.EVENT_BUS.post(TickEvent.Post.get());
         Profiler.get().pop();
+
+        if(mc != null){
+            if(mc.gui.screen() != prevScreen) {
+                prevScreen = mc.gui.screen();
+                DedTools.EVENT_BUS.post(ChangeScreenEvent.get(prevScreen));
+            }
+        }
+
     }
 
     @Inject(method = "startAttack", at = @At("HEAD"), cancellable = true)
@@ -149,22 +166,32 @@ public abstract class MinecraftMixin implements IMinecraft {
         }
     }
 
+//    @Inject(method = "startUseItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemStack;isItemEnabled(Lnet/minecraft/world/flag/FeatureFlagSet;)Z"))
+//    private void onStartUseItemHand(CallbackInfo ci, @Local(name = "heldItem") ItemStack heldItem) {
+//        FastUse fastUse = Modules.get().get(FastUse.class);
+//        if (fastUse.isActive()) {
+//            rightClickDelay = fastUse.getItemUseCooldown(heldItem);
+//        }
+//    }
+
+//    @Inject(method = "startUseItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/InteractionHand;values()[Lnet/minecraft/world/InteractionHand;"), cancellable = true)
+//    private void onStartUseItemBeforeHands(CallbackInfo ci) {
+//        if (DedTools.EVENT_BUS.post(DoItemUseEvent.get()).isCancelled()) ci.cancel();
+//    }
+
+//    @ModifyExpressionValue(method = "startUseItem", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;hitResult:Lnet/minecraft/world/phys/HitResult;", ordinal = 1, opcode = Opcodes.GETFIELD))
+//    private HitResult startUseItemMinecraftClientCrosshairTargetProxy(HitResult original) {
+//        return DedTools.EVENT_BUS.post(ItemUseCrosshairTargetEvent.get(original)).target;
+//    }
 
 
-    @Inject(method = "startUseItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/InteractionHand;values()[Lnet/minecraft/world/InteractionHand;"), cancellable = true)
-    private void onStartUseItemBeforeHands(CallbackInfo ci) {
-        if (DedTools.EVENT_BUS.post(DoItemUseEvent.get()).isCancelled()) ci.cancel();
-    }
 
-    @ModifyExpressionValue(method = "startUseItem", at = @At(value = "FIELD", target = "Lnet/minecraft/client/Minecraft;hitResult:Lnet/minecraft/world/phys/HitResult;", ordinal = 1, opcode = Opcodes.GETFIELD))
-    private HitResult startUseItemMinecraftClientCrosshairTargetProxy(HitResult original) {
-        return DedTools.EVENT_BUS.post(ItemUseCrosshairTargetEvent.get(original)).target;
-    }
 
     @ModifyReturnValue(method = "reloadResourcePacks(ZLnet/minecraft/client/GameLoadCookie;)Ljava/util/concurrent/CompletableFuture;", at = @At("RETURN"))
     private CompletableFuture<Void> onReloadResourcePacksNewCompletableFuture(CompletableFuture<Void> original) {
         return original.thenRun(() -> DedTools.EVENT_BUS.post(ResourcePacksReloadedEvent.get()));
     }
+
 
     @ModifyArg(method = "updateTitle", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/platform/Window;setTitle(Ljava/lang/String;)V"))
     private String setTitle(String original) {
@@ -180,6 +207,7 @@ public abstract class MinecraftMixin implements IMinecraft {
 
         return customTitle;
     }
+
 
 
 
@@ -205,31 +233,12 @@ public abstract class MinecraftMixin implements IMinecraft {
 
     // Multitask
 
-    @ModifyExpressionValue(method = "startUseItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;isDestroying()Z"))
-    private boolean startUseItemModifyIsBreakingBlock(boolean original) {
-        return original;
-    }
-
-    @ModifyExpressionValue(method = "continueAttack", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUsingItem()Z"))
-    private boolean continueAttackModifyIsUsingItem(boolean original) {
-        return original;
-    }
-
-    @ModifyExpressionValue(method = "handleKeybinds", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;isUsingItem()Z", ordinal = 0))
-    private boolean handleKeybindsModifyIsUsingItem(boolean original) {
-        return original;
-    }
-
-
-
 
 
     // faster inputs
 
     @Unique
     private boolean isBreaking = false;
-
-
 
 
 

@@ -4,30 +4,16 @@
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "AABBMixin",
-    "AbstractClientPlayerAccessor",
-    "AbstractClientPlayerMixin",
-    "AbstractMountInventoryMenuAccessor",
     "AddressCheckMixin",
-    "BlockCollisionsMixin",
-    "BlockEntityRenderDispatcherMixin",
-    "BlockEntityRenderStateAccessor",
-    "BlockHitResultAccessor",
-    "BlockStateMixin",
     "BuiltInRegistriesMixin",
     "ChatComponentAccessor",
     "ChatListenerMixin",
-    "ChunkAccessAccessor",
-    "ClientboundExplodePacketMixin",
-    "ClientboundSetEntityMotionPacketAccessor",
-    "ClientChunkCacheAccessor",
-    "ClientChunkMapAccessor",
-    "ClientPacketListenerAccessor",
     "ClipContextMixin",
     "ComponentMixin",
+    "ConnectionMixin",
     "CreativeModeInventoryScreenAccessor",
     "CreativeModeTabsAccessor",
     "CrossbowItemAccessor",
-    "DebugStopUsingItemMixin",
     "DirectionAccessor",
     "EntityAccessor",
     "EntitySectionAccessor",
@@ -78,11 +64,13 @@
     "RenderPipelineMixin",
     "RenderTickCounterDynamicMixin",
     "RenderTypeAccessor",
+    "RepairCostMixin",
     "ResourceLoadStateTrackerAccessor",
     "ScreenEffectRendererMixin",
     "ScreenMixin",
     "ServerboundMovePlayerPacketAccessor",
     "ServerboundMovePlayerPacketMixin",
+    "ServerboundTeleportToEntityPacketAccessor",
     "ServerPlayerMixin",
     "ShaderManagerMixin",
     "ShulkerBoxMenuAccessor",
@@ -108,6 +96,9 @@
   },
   "overwrites": {
     "requireAnnotations": true
-  }
-
+  },
+  "client": [
+    "ChatComponentMixin",
+    "GuiRenderStateMixin"
+  ]
 }

@@ -13,6 +13,7 @@ import com.dedokok.events.entity.DropItemsEvent;
 import com.dedokok.events.entity.player.*;
 import com.dedokok.mixininterface.IMultiPlayerGameMode;
 import com.dedokok.systems.modules.Modules;
+
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.MultiPlayerGameMode;
 import net.minecraft.client.multiplayer.prediction.PredictiveAction;
@@ -66,7 +67,6 @@ public abstract class MultiPlayerGameModeMixin implements IMultiPlayerGameMode {
     }
 
 
-
     @Inject(method = "useItemOn", at = @At("HEAD"), cancellable = true)
     public void useItemOn(LocalPlayer player, InteractionHand hand, BlockHitResult blockHit, CallbackInfoReturnable<InteractionResult> cir) {
         if (DedTools.EVENT_BUS.post(InteractBlockEvent.get(player.getMainHandItem().isEmpty() ? InteractionHand.OFF_HAND : hand, blockHit)).isCancelled())
@@ -93,12 +93,18 @@ public abstract class MultiPlayerGameModeMixin implements IMultiPlayerGameMode {
 
 
 
+
+
+    @Inject(method = "destroyBlock", at = @At("HEAD"), cancellable = true)
+    private void onDestroyBlock(BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        if (DedTools.EVENT_BUS.post(BreakBlockEvent.get(pos)).isCancelled()) cir.setReturnValue(false);
+    }
+
     @Inject(method = "useItem", at = @At("HEAD"), cancellable = true)
     private void onUseItem(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         InteractItemEvent event = DedTools.EVENT_BUS.post(InteractItemEvent.get(hand));
         if (event.toReturn != null) cir.setReturnValue(event.toReturn);
     }
-
 
     @Override
     public void meteor$syncSelected() {

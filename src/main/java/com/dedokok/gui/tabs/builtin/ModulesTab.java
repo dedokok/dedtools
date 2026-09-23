@@ -10,7 +10,6 @@ import com.dedokok.gui.GuiThemes;
 import com.dedokok.gui.tabs.Tab;
 import com.dedokok.gui.tabs.TabScreen;
 import net.minecraft.client.gui.screens.Screen;
-
 public class ModulesTab extends Tab {
     public ModulesTab() {
         super("Modules");

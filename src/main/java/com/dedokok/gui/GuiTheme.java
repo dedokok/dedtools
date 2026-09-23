@@ -3,6 +3,7 @@ package com.dedokok.gui;
  * This file is part of the Meteor Client distribution (https://github.com/MeteorDevelopment/meteor-client).
  * Copyright (c) Meteor Development.
  */
+import com.dedokok.gui.screens.OreVeinsScreenTab;
 import com.dedokok.gui.tabs.TabScreen;
 import com.dedokok.gui.widgets.containers.WTable;
 
@@ -30,6 +31,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class GuiTheme implements ISerializable<GuiTheme> {
@@ -143,6 +145,12 @@ public abstract class GuiTheme implements ISerializable<GuiTheme> {
         return dropdown(values, value);
     }
 
+//    public <T extends List<?>> WDropdown<T> dropdownList(List<String> value) {
+////        Class<?> klass = value.getDeclaringClass();
+//        T[] values = value.toArray((T[]) new List[0]);
+//        return (WDropdown<T>) dropdown(values, value);
+//    }
+
     public abstract WTriangle triangle();
 
     public abstract WTooltip tooltip(String text);
@@ -249,6 +257,7 @@ public abstract class GuiTheme implements ISerializable<GuiTheme> {
         return new ModulesScreen(this);
     }
 
+
     public boolean isModulesScreen(Screen screen) {
         return screen instanceof ModulesScreen;
     }
@@ -257,6 +266,14 @@ public abstract class GuiTheme implements ISerializable<GuiTheme> {
         return new ModuleScreen(this, module);
     }
 
+    public TabScreen oreVeinsScreen(){
+        return new OreVeinsScreenTab(this);
+    }
+
+
+    public boolean isOreVeinsScreen(Screen screen) {
+        return screen instanceof OreVeinsScreenTab;
+    }
 
 
     // Colors

@@ -5,17 +5,19 @@
 
 package com.dedokok.mixin;
 
-import com.dedokok.events.render.Render3DEvent;
+import com.dedokok.utils.render.NametagUtils;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.dedokok.DedTools;
 import com.dedokok.MixinPlugin;
+import com.dedokok.events.render.Render3DEvent;
 import com.dedokok.events.render.RenderAfterWorldEvent;
 import com.dedokok.renderer.MeteorRenderPipelines;
 import com.dedokok.renderer.Renderer3D;
 import com.dedokok.systems.modules.Modules;
+
 import com.dedokok.utils.Utils;
 import com.dedokok.utils.render.CustomBannerGuiElementRenderer;
 import com.dedokok.utils.render.RenderUtils;
@@ -115,8 +117,9 @@ public abstract class GameRendererMixin {
 
         // Call utility classes (apply bob correction when Iris shaders are active)
 
-        Matrix4fc correctedPosition = modelViewMatrix;
+        Matrix4fc correctedPosition = MixinPlugin.isIrisPresent ? new Matrix4f(modelViewMatrix).mul(inverseBob) : modelViewMatrix;
         RenderUtils.updateScreenCenter(projectionMatrix, correctedPosition);
+        NametagUtils.onRender(modelViewMatrix);
 
         // Render
 
@@ -137,6 +140,13 @@ public abstract class GameRendererMixin {
     private void onRenderLevelTail(CallbackInfo ci) {
         DedTools.EVENT_BUS.post(RenderAfterWorldEvent.get());
     }
+
+    @Inject(method = "displayItemActivation", at = @At("HEAD"), cancellable = true)
+    private void onDisplayItemActivation(ItemStack itemStack, CallbackInfo ci) {
+
+    }
+
+
 
 
 }

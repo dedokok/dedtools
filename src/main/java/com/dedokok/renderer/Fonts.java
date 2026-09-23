@@ -24,7 +24,7 @@ import java.util.List;
 import static com.dedokok.DedTools.mc;
 
 public class Fonts {
-    public static final String[] BUILTIN_FONTS = {"JetBrains Mono", "Comfortaa", "Tw Cen MT", "Pixelation"};
+    public static final String[] BUILTIN_FONTS = {"minecraft-1-1","JetBrains Mono", "Comfortaa", "Tw Cen MT", "Pixelation"};
 
     public static String DEFAULT_FONT_FAMILY;
     public static FontFace DEFAULT_FONT;

@@ -4,6 +4,16 @@ package com.dedokok.gui.renderer;/*
  */
 
 
+import com.dedokok.events.render.GUIRenderEvent;
+import com.dedokok.events.render.Render2DEvent;
+import com.dedokok.gui.GuiHitTest;
+import com.dedokok.gui.WindowScreen;
+import com.dedokok.gui.screens.settings.VeinsListSettingScreen;
+import com.dedokok.gui.themes.meteor.widgets.WMeteorVeinChoose;
+import com.dedokok.gui.widgets.WVeinChoose;
+import com.dedokok.systems.modules.Feature.BlockBreakFinder;
+import com.dedokok.utils.Utils;
+import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import com.dedokok.DedTools;
@@ -59,7 +69,7 @@ public class GuiRenderer {
     public WWidget tooltipWidget;
     private double tooltipAnimProgress;
 
-    private GuiGraphicsExtractor graphics;
+    public GuiGraphicsExtractor graphics;
 
     public static GuiTexture addTexture(Identifier id) {
         return TEXTURE_PACKER.add(id);
@@ -89,6 +99,8 @@ public class GuiRenderer {
         matrices.scale(1.0f / mc.getWindow().getGuiScale());
 
         scissorStart(0, 0, getWindowWidth(), getWindowHeight());
+
+
     }
 
     public void end() {
@@ -197,7 +209,10 @@ public class GuiRenderer {
             setAlpha(tooltipAnimProgress);
 
             begin(graphics);
+            graphics.nextStratum();
+            //RenderSystem.disableDepthTest();
             tooltipWidget.render(this, mouseX, mouseY, delta);
+           // RenderSystem.enableDepthTest();
             end();
 
             setAlpha(1);
@@ -209,6 +224,80 @@ public class GuiRenderer {
         tooltip = null;
         return toReturn;
     }
+
+
+    public WVeinChoose createVeinMenu(VeinsListSettingScreen screen, BlockBreakFinder.Vein vein){
+        WVeinChoose veinWidget = new WMeteorVeinChoose(screen, vein);
+        veinWidget.theme = theme;
+        veinWidget.init();
+        return veinWidget;
+    }
+
+    private double lastMouseX=-1;
+    private double lastMouseY=-1;
+
+    public WVeinChoose renderVeinMenu(WVeinChoose veinWidget, GuiGraphicsExtractor graphics,
+                                      double menuX, double menuY,
+                                      double mouseX, double mouseY,
+                                      double delta) {
+        Utils.unscaledProjection();
+        boolean toReturn = false;
+        //if (tooltip != null && !tooltip.equals(lastTooltip)) {
+
+
+        int s = mc.getWindow().getGuiScale();
+        menuX *= s;
+        menuY *= s;
+
+
+
+        double deltaX = -veinWidget.x + menuX + 12;
+        double deltaY = -veinWidget.y + menuY + 12;
+
+        if (menuX + 12 + veinWidget.width > getWindowWidth())
+            deltaX = -veinWidget.x + getWindowWidth() - veinWidget.width;
+        if (menuY + 12 + veinWidget.height > getWindowHeight())
+            deltaY = -veinWidget.y + getWindowHeight() - veinWidget.height;
+
+        veinWidget.move(deltaX, deltaY);
+
+
+        veinWidget.x = menuX;
+        veinWidget.y = menuY;
+        veinWidget.calculateSize();
+        veinWidget.calculateWidgetPositions();
+
+        veinWidget.mouseMoved(mouseX, mouseY, lastMouseX, lastMouseY);   // <-- эта строка
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+
+
+        begin(graphics);
+        graphics.nextStratum();
+        veinWidget.render(this, mouseX, mouseY, delta);
+        GuiHitTest.register(veinWidget);
+
+
+        end();
+
+        setAlpha(1);
+
+        toReturn = true;
+
+
+        veinWidget.layer=1;
+
+        Utils.scaledProjection();
+
+        return veinWidget;
+    }
+
+    public void renderWidget(WWidget widget, double mouseX, double mouseY, double delta) {
+        widget.render(this, mouseX, mouseY, delta);
+    }
+
+
+
 
     public void setAlpha(double a) {
         r.setAlpha(a);

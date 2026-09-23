@@ -6,22 +6,21 @@
 package com.dedokok.events.game;
 
 import com.dedokok.events.Cancellable;
-import net.minecraft.client.multiplayer.chat.GuiMessageTag;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.client.multiplayer.chat.GuiMessageSource;
 import net.minecraft.network.chat.Component;
 
 public class ReceiveMessageEvent extends Cancellable {
     private static final ReceiveMessageEvent INSTANCE = new ReceiveMessageEvent();
 
     private Component message;
-    private GuiMessageTag indicator;
-    private boolean modified;
-    public int id;
+    private GuiMessageSource sender;
+    private int id;
 
-    public static ReceiveMessageEvent get(Component message, GuiMessageTag indicator, int id) {
+    public static ReceiveMessageEvent get(GuiMessageSource sender, Component message, int id) {
         INSTANCE.setCancelled(false);
         INSTANCE.message = message;
-        INSTANCE.indicator = indicator;
-        INSTANCE.modified = false;
+        INSTANCE.sender = sender;
         INSTANCE.id = id;
         return INSTANCE;
     }
@@ -30,21 +29,13 @@ public class ReceiveMessageEvent extends Cancellable {
         return message;
     }
 
-    public GuiMessageTag getIndicator() {
-        return indicator;
-    }
 
     public void setMessage(Component message) {
         this.message = message;
-        this.modified = true;
     }
 
-    public void setIndicator(GuiMessageTag indicator) {
-        this.indicator = indicator;
-        this.modified = true;
+    public  GuiMessageSource getSender() {
+        return sender;
     }
 
-    public boolean isModified() {
-        return modified;
-    }
 }

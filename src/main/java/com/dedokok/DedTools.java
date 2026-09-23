@@ -10,13 +10,16 @@ import com.dedokok.gui.GuiThemes;
 import com.dedokok.gui.WidgetScreen;
 import com.dedokok.gui.renderer.GuiRenderer;
 import com.dedokok.gui.tabs.Tabs;
+import com.dedokok.mixin.MinecraftMixin;
 import com.dedokok.renderer.Fonts;
+import com.dedokok.renderer.Renderer2D;
 import com.dedokok.systems.Systems;
 import com.dedokok.systems.config.Config;
 import com.dedokok.systems.hud.screens.AddHudElementScreen;
 import com.dedokok.systems.hud.screens.HudEditorScreen;
 import com.dedokok.systems.hud.screens.HudElementScreen;
 import com.dedokok.systems.modules.Categories;
+import com.dedokok.systems.modules.Feature.AutoReceiver;
 import com.dedokok.systems.modules.Feature.DiscordPresence;
 import com.dedokok.systems.modules.Modules;
 import com.dedokok.utils.Utils;
@@ -29,6 +32,7 @@ import meteordevelopment.orbit.EventPriority;
 import meteordevelopment.orbit.IEventBus;
 import java.lang.invoke.MethodHandles;
 import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import net.minecraft.client.Minecraft;
@@ -52,6 +56,10 @@ public class DedTools implements ClientModInitializer {
 	//apublic static MeteorAddon ADDON;
 
 	public static DedTools INSTANCE;
+
+
+	public static boolean isStartedCountt = false;
+	int ticks = 0;
 
 	public static Minecraft mc;
 	public static final IEventBus EVENT_BUS = new EventBus();
@@ -89,6 +97,7 @@ public class DedTools implements ClientModInitializer {
 			MixinEnvironment.getCurrentEnvironment().audit();
 		}
 
+
 		LOG.info("Initializing {}", NAME);
 		// Pre-load
 		if (!FOLDER.exists()) {
@@ -108,6 +117,7 @@ public class DedTools implements ClientModInitializer {
 		Categories.init();
 		Systems.init();
 		MeteorStarscript.init();
+		Renderer2D.init();
 
 
 
@@ -122,21 +132,27 @@ public class DedTools implements ClientModInitializer {
 			DedTools.LOG.info("Shutdown hook started");
 
 			Systems.save();
-			DedTools.LOG.info("Systems.save() took {} ms", System.currentTimeMillis() - t0);
-
 			GuiThemes.save();
 			DedTools.LOG.info("Shutdown hook finished, total {} ms", System.currentTimeMillis() - t0);
 
 		}));
 		GuiThemes.postInit();
 		GuiRenderer.init();
+		isStartedCountt=true;
 	}
+
+
 
 	@EventHandler
 	private void onTick(TickEvent.Post event) {
-		if (mc.gui.screen() == null && mc.gui.overlay() == null && KeyBinds.OPEN_COMMANDS.consumeClick()) {
-			mc.gui.setScreen(new ChatScreen(Config.get().prefix.get(), true));
+		ticks++;
+		if(isStartedCountt && ticks >= 200) {
+			Systems.save();
+			ticks = 0;
 		}
+//		if (mc.gui.screen() == null && mc.gui.overlay() == null && KeyBinds.OPEN_COMMANDS.consumeClick()) {
+//			mc.gui.setScreen(new ChatScreen(Config.get().prefix.get(), true));
+//		}
 
 		if (mc.player == null) return;
 
@@ -146,6 +162,7 @@ public class DedTools implements ClientModInitializer {
 			Thread.dumpStack();
 			lastUsingState = using;
 		}
+
 
 	}
 	private boolean lastUsingState = false;
@@ -194,5 +211,10 @@ public class DedTools implements ClientModInitializer {
 
 	public static Identifier identifier(String path) {
 		return Identifier.fromNamespaceAndPath(DedTools.MOD_ID, path);
+	}
+
+	public class TickState {
+		public static boolean isStarted = false;
+		public static int ticks = 0;
 	}
 }

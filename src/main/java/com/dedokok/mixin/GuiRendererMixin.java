@@ -5,6 +5,7 @@
 
 package com.dedokok.mixin;
 
+import com.dedokok.events.render.GUIRenderEvent;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.dedokok.DedTools;
 import com.dedokok.events.render.Render2DEvent;
@@ -42,9 +43,9 @@ public abstract class GuiRendererMixin {
         this.renderState = new GuiRenderState();
 
         guiRenderer = new MeteorMcGuiRenderer(
-            this.renderState,
-            featureRenderDispatcher,
-            pictureInPictureRenderers
+                this.renderState,
+                featureRenderDispatcher,
+                pictureInPictureRenderers
         );
     }
 
@@ -94,6 +95,14 @@ public abstract class GuiRendererMixin {
             var guiDelta = mc.getDeltaTracker().getGameTimeDeltaTicks();
 
             widgetScreen.renderCustom(graphics, mouseX, mouseY, guiDelta);
+            guiRenderer.render();
+
+            var graphics2 = new GuiGraphicsExtractor(mc, renderState, mouseX, mouseY);
+            widgetScreen.renderTooltipOnly(graphics2, mouseX, mouseY, guiDelta);
+
+
+            DedTools.EVENT_BUS.post(GUIRenderEvent.get(widgetScreen.getRenderer(), mouseX, mouseY, guiDelta));
+
             guiRenderer.render();
         }
     }

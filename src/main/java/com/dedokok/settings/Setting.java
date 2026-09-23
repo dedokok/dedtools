@@ -107,6 +107,8 @@ public abstract class Setting<T> implements IGetter<T>, ISerializable<T> {
         return null;
     }
 
+    //protected abstract boolean isValueValid(String value);
+
     public Iterable<String> getSuggestions() {
         return NO_SUGGESTIONS;
     }

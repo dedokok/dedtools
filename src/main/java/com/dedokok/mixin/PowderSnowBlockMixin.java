@@ -16,4 +16,5 @@ import static com.dedokok.DedTools.mc;
 
 @Mixin(PowderSnowBlock.class)
 public abstract class PowderSnowBlockMixin {
+
 }

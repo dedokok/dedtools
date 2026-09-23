@@ -46,6 +46,14 @@ public abstract class GuiMixin {
 
     @WrapOperation(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/KeyMapping;releaseAll()V"))
     private void meteor$onSetScreenKeyBindingUnpressAll(Operation<Void> op) {
-        return;
+        Modules modules = Modules.get();
+        if (modules == null) {
+            op.call();
+            return;
+        }
+
+
+
+
     }
 }

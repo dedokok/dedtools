@@ -14,5 +14,4 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 @Mixin(StringDecomposer.class)
 public abstract class StringDecomposerMixin {
 
-
 }

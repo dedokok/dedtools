@@ -81,7 +81,9 @@ public class ModulesScreen extends TabScreen {
         }
 
         return w;
+
     }
+
 
     // Search
 

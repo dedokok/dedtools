@@ -186,4 +186,72 @@ public class Renderer2D {
     public void texQuad(double x, double y, double width, double height, double rotation, TextureRegion region, Color color) {
         texQuad(x, y, width, height, rotation, region.x1, region.y1, region.x2, region.y2, color);
     }
+
+
+    //circles
+    public void circleLines(double cx, double cy, double radius, int segments, Color color) {
+        lines.ensureCapacity(segments, segments * 2);
+
+        int firstIndex = -1;
+        int prevIndex = -1;
+
+        for (int i = 0; i < segments; i++) {
+            double angle = 2 * Math.PI * i / segments;
+            double x = cx + radius * Math.cos(angle);
+            double y = cy + radius * Math.sin(angle);
+
+            int index = lines.vec2(x, y).color(color).next();
+
+            if (i == 0) firstIndex = index;
+            else lines.line(prevIndex, index);
+
+            prevIndex = index;
+        }
+
+        lines.line(prevIndex, firstIndex);
+    }
+
+    public void circle(double cx, double cy, double radius, int segments, Color color) {
+        triangles.ensureCapacity(segments + 1, segments * 3);
+
+        int centerIndex = triangles.vec2(cx, cy).color(color).next();
+        int firstIndex = -1;
+        int prevIndex = -1;
+
+        for (int i = 0; i < segments; i++) {
+            double angle = 2 * Math.PI * i / segments;
+            double x = cx + radius * Math.cos(angle);
+            double y = cy + radius * Math.sin(angle);
+
+            int index = triangles.vec2(x, y).color(color).next();
+
+            if (i == 0) firstIndex = index;
+            else triangles.triangle(centerIndex, prevIndex, index);
+
+            prevIndex = index;
+        }
+
+        triangles.triangle(centerIndex, prevIndex, firstIndex);
+    }
+
+    public void ring(double cx, double cy, double innerRadius, double outerRadius, int segments, Color color) {
+        triangles.ensureCapacity(segments * 2, segments * 6);
+
+        for (int i = 0; i < segments; i++) {
+            double a1 = 2 * Math.PI * i / segments;
+            double a2 = 2 * Math.PI * (i + 1) / segments;
+
+            double cos1 = Math.cos(a1), sin1 = Math.sin(a1);
+            double cos2 = Math.cos(a2), sin2 = Math.sin(a2);
+
+            int i1 = triangles.vec2(cx + outerRadius * cos1, cy + outerRadius * sin1).color(color).next();
+            int i2 = triangles.vec2(cx + innerRadius * cos1, cy + innerRadius * sin1).color(color).next();
+            int i3 = triangles.vec2(cx + innerRadius * cos2, cy + innerRadius * sin2).color(color).next();
+            int i4 = triangles.vec2(cx + outerRadius * cos2, cy + outerRadius * sin2).color(color).next();
+
+            triangles.quad(i1, i2, i3, i4);
+        }
+    }
+
+
 }

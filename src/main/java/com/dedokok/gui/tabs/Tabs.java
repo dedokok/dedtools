@@ -25,7 +25,8 @@ public class Tabs {
         add(new ConfigTab());
         add(new GuiTab());
         add(new HudTab());
-        add(new ProfilesTab());
+        //add(new ProfilesTab());
+        //add(new OreVeinsTab());
     }
 
     public static void add(Tab tab) {

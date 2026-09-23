@@ -11,5 +11,5 @@ import com.dedokok.utils.misc.ICopyable;
 import com.dedokok.utils.misc.ISerializable;
 
 public interface IGeneric<T extends IGeneric<T>> extends ICopyable<T>, ISerializable<T> {
-    WidgetScreen createScreen(GuiTheme theme, GenericSetting<T> setting);
+    WidgetScreen createScreen(GuiTheme theme, Setting<T> setting);
 }

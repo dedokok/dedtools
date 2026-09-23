@@ -168,6 +168,8 @@ public class ChatUtils {
         return prefix;
     }
 
+
+
     private static Component getPrefix() {
         if (customPrefixes.isEmpty()) {
             forcedPrefixClassName = null;

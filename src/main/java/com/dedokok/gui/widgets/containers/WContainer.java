@@ -23,6 +23,7 @@ import static com.dedokok.utils.Utils.getWindowHeight;
 public abstract class WContainer extends WWidget {
     public final List<Cell<?>> cells = new ArrayList<>();
 
+
     public <T extends WWidget> Cell<T> add(T widget) {
         widget.parent = this;
         widget.theme = theme;
