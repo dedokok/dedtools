@@ -8,13 +8,10 @@ import com.dedokok.events.world.TickEvent;
 import com.dedokok.gui.utils.StarscriptTextBoxRenderer;
 import com.dedokok.renderer.Renderer2D;
 import com.dedokok.renderer.ShapeMode;
-import com.dedokok.renderer.text.TextRenderer;
 import com.dedokok.settings.*;
 import com.dedokok.systems.modules.Categories;
 import com.dedokok.systems.modules.Module;
-import com.dedokok.utils.entity.EntityUtils;
 import com.dedokok.utils.misc.input.KeyAction;
-import com.dedokok.utils.player.PlayerUtils;
 import com.dedokok.utils.render.NametagUtils;
 import com.dedokok.utils.render.RenderUtils;
 import com.dedokok.utils.render.color.Color;
@@ -36,12 +33,6 @@ public class CirclePlayerCommand extends Module {
     }
 
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
-    private final Setting<Boolean> isJustSpectatorSetting = sgGeneral.add(new BoolSetting.Builder()
-            .name("work-only-in-spectator")
-            .description("Does module will work just in spectator")
-            .defaultValue(true)
-            .build()
-    );
     private final Setting<MessageTypes> sendTypeSetting = sgGeneral.add(new EnumSetting.Builder<MessageTypes>()
             .name("send-type")
             .description("What type of string need to send")
@@ -134,7 +125,6 @@ public class CirclePlayerCommand extends Module {
     private final Color lineColor = new Color();
     private final Color sideColor = new Color();
 
-    private final Vector3d pos = new Vector3d();
 
     Entity hover_entity = null;
     private Entity target_entity = null;
@@ -143,7 +133,7 @@ public class CirclePlayerCommand extends Module {
     @EventHandler
     private void onRender2D(Render2DEvent event) {
 
-        if(mc.player==null || RenderUtils.center==null)return;
+        if(mc.player==null || RenderUtils.center==null || mc.level==null)return;
         if (mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden)
             return;
 
@@ -205,15 +195,7 @@ public class CirclePlayerCommand extends Module {
 
         Renderer2D.COLOR.render();
     }
-    private double getHeight(Entity entity) {
-        double height = entity.getEyeHeight(entity.getPose());
 
-        if (entity.getType() == EntityTypes.ITEM || entity.getType() == EntityTypes.ITEM_FRAME || entity.getType() == EntityTypes.GLOW_ITEM_FRAME)
-            height += 0.2;
-        else height += 0.5;
-
-        return height;
-    }
 
     private Double distanceToScreenCenter(Entity entity, float tickDelta, double cx, double cy) {
         double x = Mth.lerp(tickDelta, entity.xOld, entity.getX());
@@ -221,10 +203,10 @@ public class CirclePlayerCommand extends Module {
         double z = Mth.lerp(tickDelta, entity.zOld, entity.getZ());
 
         double height = entity.getBoundingBox().maxY - entity.getBoundingBox().minY;
-        y += height / 2; // центр сущности по высоте
+        y += height / 2;
 
         Vector3d pos = new Vector3d(x, y, z);
-        if (!NametagUtils.to2D(pos, 1)) return null; // за камерой / не проецируется
+        if (!NametagUtils.to2D(pos, 1)) return null;
 
         double dx = pos.x - cx;
         double dy = pos.y - cy;
@@ -236,14 +218,14 @@ public class CirclePlayerCommand extends Module {
     @EventHandler
     public void onTick(TickEvent.Post event){
         if(mc.player==null)return;
-        if(!mc.player.isSpectator() && isJustSpectatorSetting.get()){
+        if(!mc.player.isSpectator()){
             disable();
         }
     }
     @Override
     public void onActivate(){
         if(mc.player==null)return;
-        if(!mc.player.isSpectator() && isJustSpectatorSetting.get()){
+        if(!mc.player.isSpectator()){
             disable();
         }
     }
@@ -267,25 +249,6 @@ public class CirclePlayerCommand extends Module {
 
         event.renderer.line(x, entity.getY(), z, x, entity.getY() + height, z, color);
         drawBoundingBox(event, entity);
-    }
-
-    private double angleToCrosshair(Entity entity, float tickDelta) {
-        Vec3 eyePos = mc.player.getEyePosition(tickDelta);
-        Vec3 lookVec = mc.player.getViewVector(tickDelta).normalize();
-
-        double x = entity.xo + (entity.getX() - entity.xo) * tickDelta;
-        double y = entity.yo + (entity.getY() - entity.yo) * tickDelta;
-        double z = entity.zo + (entity.getZ() - entity.zo) * tickDelta;
-
-        double height = entity.getBoundingBox().maxY - entity.getBoundingBox().minY;
-        y += height / 2;
-
-        Vec3 toEntity = new Vec3(x, y, z).subtract(eyePos).normalize();
-
-        double dot = lookVec.dot(toEntity);
-        double angleRad = Math.acos(Mth.clamp(dot, -1.0, 1.0));
-
-        return Math.toDegrees(angleRad);
     }
 
 
