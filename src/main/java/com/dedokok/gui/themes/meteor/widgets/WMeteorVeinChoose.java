@@ -13,11 +13,12 @@ import com.dedokok.gui.themes.meteor.MeteorWidget;
 import com.dedokok.gui.widgets.WTooltip;
 import com.dedokok.gui.widgets.WVeinChoose;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
+import com.dedokok.utils.classes.Vein;
 import com.dedokok.utils.render.color.Color;
 import net.minecraft.client.input.MouseButtonEvent;
 
 public class WMeteorVeinChoose extends WVeinChoose implements MeteorWidget {
-    public WMeteorVeinChoose(VeinsListSettingScreen screen, BlockBreakFinder.Vein vein) {
+    public WMeteorVeinChoose(VeinsListSettingScreen screen, Vein vein) {
         super(screen,vein);
     }
 

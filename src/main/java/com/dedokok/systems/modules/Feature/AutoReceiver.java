@@ -144,11 +144,11 @@ public class AutoReceiver extends Module {
 
         //if(isRandomReceiveTimeSetting.get()){
             if(afterTimeSetting.get()>=beforeTimeSetting.get()){
-                mc.player.sendSystemMessage(Component.literal("Время after не может быть больше или равно времени before, отправка сообщения отменена").withStyle(ChatFormatting.RED));
+                mc.player.sendSystemMessage(Component.literal("After time cannot be more than before time").withStyle(ChatFormatting.RED));
                 return;
             }
             if(beforeTimeSetting.get()<=afterTimeSetting.get()){
-                mc.player.sendSystemMessage(Component.literal("Время before не может быть меньше или равно времени after, отправка сообщения отменена").withStyle(ChatFormatting.RED));
+                mc.player.sendSystemMessage(Component.literal("Before time cannot be lower than after time").withStyle(ChatFormatting.RED));
                 return;
             }
             Long timeGet = System.currentTimeMillis();
@@ -203,7 +203,7 @@ public class AutoReceiver extends Module {
     }
 
     private void sendMessage(String message){
-        mc.gui.hud.setTitle(Component.literal("Отправил сообщение").withStyle(ChatFormatting.GREEN));
+        mc.gui.hud.setTitle(Component.literal("Sent message").withStyle(ChatFormatting.GREEN));
         mc.gui.hud.setTimes(10, 70, 20);
         mc.player.connection.sendChat(message);
     }

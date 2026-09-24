@@ -129,54 +129,25 @@ public class CirclePlayerCommand extends Module {
 //    );
 
 
-    private int count;
+
 
     private final Color lineColor = new Color();
     private final Color sideColor = new Color();
-    private final Color baseColor = new Color();
 
-    private final Vector3d pos1 = new Vector3d();
-    private final Vector3d pos2 = new Vector3d();
     private final Vector3d pos = new Vector3d();
-
-    private int count_2;
 
     Entity hover_entity = null;
     private Entity target_entity = null;
 
 
-
-
-
-
-    boolean stop = true;
     @EventHandler
     private void onRender2D(Render2DEvent event) {
 
         if(mc.player==null || RenderUtils.center==null)return;
         if (mc.gameRenderer.gameRenderState().guiRenderState.isHudHidden)
             return;
-        //count = 0;
-
 
         if (Renderer2D.COLOR == null) return;
-
-
-        //event.graphics.drawString(mc.font, "TEST123", 100, 100, 0xFFFFFF, true);
-//        event.graphics.text(mc.font,"TEST123", 100, 100, 0xFFFFFF, true);
-       // event.graphics.item(new ItemStack(Items.DIAMOND),200,100);
-
-
-       // var scaledW = mc.getWindow().getGuiScaledWidth();
-       // var scaledH = mc.getWindow().getGuiScaledHeight();
-       // event.graphics.text(mc.font, "TEST123", scaledW / 2, scaledH / 2, 0xFFFFFF, true);
-        //event.graphics.scissorStack(0, 0, scaledW, scaledH); // или как называется push-метод у тебя
-       // event.graphics.text(mc.font, "TEST123", scaledW / 2, scaledH / 2, 0xFFFFFF, true);
-        //event.graphics.popScissor();
-        //event.graphics.
-        //Font.PreparedText prepared = mc.font.prepareText(Language.getInstance().getVisualOrder(FormattedText.of("TEST123")), 100f, 100f, 0xFFFFFF, true, false, 0);
-        //System.out.println("prepared bounds: " + prepared.bounds());
-
 
         var window = mc.getWindow();
         double cx = Math.round(window.getWidth() / 2.0)+circleXOffset.get();
@@ -232,17 +203,6 @@ public class CirclePlayerCommand extends Module {
         }
 
 
-//        Entity temp_en = target_entity!=null?target_entity:hover_entity;
-//        if(temp_en!=null) {
-//
-//            Utils.set(pos, temp_en, event.tickDelta);
-//            pos.add(0, getHeight(temp_en), 0);
-//            boolean shadow = Config.get().customFont.get();
-//            if (NametagUtils.to2D(pos, scale.get())) {
-//                if (temp_en instanceof Player player) renderNametagPlayer(event, player, shadow);
-//            }
-//        }
-
         Renderer2D.COLOR.render();
     }
     private double getHeight(Entity entity) {
@@ -291,9 +251,8 @@ public class CirclePlayerCommand extends Module {
     @EventHandler
     private void onRender3D(Render3DEvent event) {
         if (mc.player == null || RenderUtils.center == null) return;
-        count = 0;
 
-        Color color = Color.WHITE;
+        Color color = circleColorSetting.get();
 
         Entity entity = target_entity!=null ?target_entity: hover_entity;
         if (entity == null) return;
@@ -308,9 +267,6 @@ public class CirclePlayerCommand extends Module {
 
         event.renderer.line(x, entity.getY(), z, x, entity.getY() + height, z, color);
         drawBoundingBox(event, entity);
-        count++;
-
-
     }
 
     private double angleToCrosshair(Entity entity, float tickDelta) {
@@ -423,90 +379,6 @@ public class CirclePlayerCommand extends Module {
         event.renderer.box(x + box.minX, y + box.minY, z + box.minZ, x + box.maxX, y + box.maxY, z + box.maxZ, sideColor, lineColor, shape, 0);
     }
 
-    private final Color WHITE = new Color(255, 255, 255);
-    private final Color RED = new Color(255, 25, 25);
-    private final Color AMBER = new Color(255, 105, 25);
-    private final Color GREEN = new Color(25, 252, 25);
-    private final Color GOLD = new Color(232, 185, 35);
-    private void renderNametagPlayer(Render2DEvent event, Player player, boolean shadow) {
-        String name = player.getName().getString();
-        //System.out.println("renderNametagPlayer called for: " + name + " pos=" + pos.x + "," + pos.y + "," + pos.z);
-
-        TextRenderer text = TextRenderer.get();
-        // Name
-
-        NametagUtils.begin(pos, event.graphics);
-
-
-        Color nameColor = circleColorSetting.get();
-
-
-
-        // Health
-        float absorption = player.getAbsorptionAmount();
-        int health = Math.round(player.getHealth() + absorption);
-        double healthPercentage = health / (player.getMaxHealth() + absorption);
-
-        String healthText = " " + health;
-        Color healthColor;
-
-        if (healthPercentage <= 0.333) healthColor = RED;
-        else if (healthPercentage <= 0.666) healthColor = AMBER;
-        else healthColor = GREEN;
-
-        // Ping
-        int ping = EntityUtils.getPing(player);
-        String pingText = " [" + ping + "ms]";
-
-        // Distance
-        double dist = Math.round(PlayerUtils.distanceToCamera(player) * 10.0) / 10.0;
-        String distText = " " + dist + "m";
-
-        // Calc widths
-        //double gmWidth = text.getWidth(gmText, shadow);
-        double nameWidth = text.getWidth(name, shadow);
-        double healthWidth = text.getWidth(healthText, shadow);
-        double pingWidth = text.getWidth(pingText, shadow);
-        double distWidth = text.getWidth(distText, shadow);
-
-        double width = nameWidth;
-
-        width += healthWidth;
-        width += pingWidth;
-        width += distWidth;
-
-        double widthHalf = width / 2;
-        double heightDown = text.getHeight(shadow);
-
-        //drawBg(-widthHalf, -heightDown, width, heightDown);
-
-        //drawBg(pos.x, pos.y, -widthHalf, -heightDown, width, heightDown);
-
-        // Render texts
-        text.beginBig(event.graphics);
-        double hX = -widthHalf;
-        double hY = -heightDown;
-
-        //if (displayGameMode.get()) hX = text.render(gmText, hX, hY, gamemodeColor.get(), shadow);
-        //System.out.println("about to render text, hX=" + hX + " hY=" + hY);
-        hX = text.render(name, hX, hY, nameColor, shadow);
-        //System.out.println("text rendered, new hX=" + hX);
-        hX = text.render(healthText, hX, hY, healthColor, shadow);
-        hX = text.render(pingText, hX, hY, circleColorSetting.get(), shadow);
-
-        text.render(distText, hX, hY, circleColorSetting.get(), shadow);
-
-
-        text.end();
-        NametagUtils.end(event.graphics);
-
-
-    }
-    private void drawBg(double screenX, double screenY, double x, double y, double width, double height) {
-       // Renderer2D.COLOR.begin();
-        Renderer2D.COLOR.quad(screenX + x - 1, screenY + y - 1, width + 2, height + 2, Color.WHITE);
-        //Renderer2D.COLOR.render();
-    }
 
 
 

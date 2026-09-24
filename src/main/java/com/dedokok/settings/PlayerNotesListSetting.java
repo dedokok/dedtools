@@ -12,7 +12,7 @@ import com.dedokok.gui.widgets.containers.WTable;
 import com.dedokok.gui.widgets.input.WTextBox;
 import com.dedokok.gui.widgets.pressable.WButton;
 import com.dedokok.gui.widgets.pressable.WMinus;
-import com.dedokok.settings.classes.PlayerNote;
+import com.dedokok.utils.classes.PlayerNote;
 import com.dedokok.systems.modules.Feature.PlayerTracker;
 import com.dedokok.systems.modules.Feature.PlayersNoteBook;
 import com.dedokok.systems.modules.Modules;

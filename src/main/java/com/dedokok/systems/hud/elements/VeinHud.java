@@ -11,6 +11,7 @@ import com.dedokok.systems.modules.Feature.BlockBreakFinder;
 import com.dedokok.systems.modules.Feature.PlayerStats;
 import com.dedokok.systems.modules.Feature.PlayerTracker;
 import com.dedokok.systems.modules.Modules;
+import com.dedokok.utils.classes.Vein;
 import com.dedokok.utils.render.color.SettingColor;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.world.entity.Entity;
@@ -94,7 +95,7 @@ public class VeinHud extends HudElement {
                 //uuid=PlayerStats.targetUUID;
             //}
 
-            BlockBreakFinder.Vein vein = BlockBreakFinder.teleported_vein;
+            Vein vein = BlockBreakFinder.teleported_vein;
 
             if(mc.player == null)return;
 

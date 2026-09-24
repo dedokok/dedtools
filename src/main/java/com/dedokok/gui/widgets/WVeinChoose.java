@@ -14,6 +14,7 @@ import com.dedokok.gui.widgets.containers.WTable;
 import com.dedokok.gui.widgets.pressable.WButton;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
 import com.dedokok.systems.modules.Modules;
+import com.dedokok.utils.classes.Vein;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -24,10 +25,10 @@ import static com.dedokok.DedTools.mc;
 public abstract class WVeinChoose extends WContainer implements WRoot {
     private boolean valid;
 
-    protected BlockBreakFinder.Vein vein;
+    protected Vein vein;
     public VeinsListSettingScreen screen;
 
-    public WVeinChoose(VeinsListSettingScreen screen, BlockBreakFinder.Vein vein) {
+    public WVeinChoose(VeinsListSettingScreen screen, Vein vein) {
         this.screen=screen;
         this.vein=vein;
     }

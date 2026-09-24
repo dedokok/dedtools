@@ -13,6 +13,7 @@ import com.dedokok.gui.themes.meteor.widgets.WMeteorVeinChoose;
 import com.dedokok.gui.widgets.WVeinChoose;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
 import com.dedokok.utils.Utils;
+import com.dedokok.utils.classes.Vein;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.Stack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -226,7 +227,7 @@ public class GuiRenderer {
     }
 
 
-    public WVeinChoose createVeinMenu(VeinsListSettingScreen screen, BlockBreakFinder.Vein vein){
+    public WVeinChoose createVeinMenu(VeinsListSettingScreen screen, Vein vein){
         WVeinChoose veinWidget = new WMeteorVeinChoose(screen, vein);
         veinWidget.theme = theme;
         veinWidget.init();

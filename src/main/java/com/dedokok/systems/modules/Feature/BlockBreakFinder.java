@@ -1,20 +1,18 @@
 package com.dedokok.systems.modules.Feature;
 
-import com.dedokok.events.meteor.MouseClickEvent;
 import com.dedokok.events.render.Render3DEvent;
 import com.dedokok.events.world.TickEvent;
 import com.dedokok.settings.*;
-import com.dedokok.systems.hud.Hud;
 import com.dedokok.systems.modules.Categories;
 import com.dedokok.systems.modules.Feature.blockesp.ESPBlock;
 import com.dedokok.systems.modules.Module;
 import com.dedokok.systems.modules.Modules;
+import com.dedokok.utils.classes.Coords;
+import com.dedokok.utils.classes.Row;
+import com.dedokok.utils.classes.Vein;
 import com.dedokok.utils.misc.Keybind;
-import com.dedokok.utils.other.TelegramNotifier;
 import com.dedokok.utils.render.color.Color;
 import com.dedokok.utils.render.color.SettingColor;
-import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,15 +42,13 @@ public class BlockBreakFinder extends Module {
     private final SettingGroup sgGeneral = settings.getDefaultGroup();
     public static List<Block> ORES = List.of(Blocks.DEEPSLATE_DIAMOND_ORE);
     public static HashSet<String> ORES_String = new HashSet<>();
-    //public static HashMap<Long,Row>rows = new HashMap<>();
     public static HashMap<Long,Row> rows= new HashMap<>();
     private int maxPages = -1;
-    private int commandCooldown = 0; //сколько уже прошло тиков с отправки прошлой команды
+    private int commandCooldown = 0;
     private int pageNow = 1;
-    private int maxRowsCount = 0; //получаю из count сообщения
+    private int maxRowsCount = 0;
 
     private boolean isHandledRowsCountMessage = false;
-    private boolean skipNextCoords = false;
     private boolean isStarted = false;
     private boolean isHandledStartMessage = false;
     private boolean isHandledEndMessage = false;
@@ -77,7 +73,6 @@ public class BlockBreakFinder extends Module {
     public static ArrayList<Vein>veinsPlayerNow = new ArrayList<>();
     public static String prevUsername = null;
     public static ArrayList<ESPBlock> blocks = new ArrayList<>();
-    public static HashSet<String>blockedUsers = new HashSet<>();
 
 
 
@@ -183,6 +178,21 @@ public class BlockBreakFinder extends Module {
 
     private final SettingGroup sgExcludeUsersToLookup = settings.createGroup("ExcludeUsersToLookup");
 
+    private final Setting<ExcludeTypes> excludeType = sgExcludeUsersToLookup.add(new EnumSetting.Builder<ExcludeTypes>()
+            .name("exclude-users-type")
+            .description("Type of how mod excludes users. Mod - get all rows and after remove excluded players. Command - add players to \"exclude:\" coreprotect attribute")
+            .defaultValue(ExcludeTypes.Mod)
+            .onChanged(mode -> {
+                disable();
+                stopProcess();
+            })
+            .build()
+    );
+    public enum ExcludeTypes {
+        Mod,
+        Command
+    }
+
     public final Setting<List<String>> excludeEsersToLookupSetting = sgExcludeUsersToLookup.add(new StringListSetting.Builder()
             .name("exclude-users-to-lookup")
             .description("Whats users in lookup command should skip")
@@ -190,7 +200,7 @@ public class BlockBreakFinder extends Module {
     );
 
     private final Setting<String> radiusToLookupSetting = sgGeneral.add(new StringSetting.Builder()
-            .name("ratius-to-lookup")
+            .name("radius-to-lookup")
             .description("What radius in lookup command should use. F.e. \"#world\"")
             .build()
     );
@@ -266,7 +276,7 @@ public class BlockBreakFinder extends Module {
         //mc.player.sendSystemMessage(Component.literal("next"));
         veinNow++;
         if(veinNow==veinsArrayList.size()){
-            mc.player.sendSystemMessage(Component.literal("Дошёл до конца списка, начал сначала"));
+            mc.player.sendSystemMessage(Component.literal("Reached list's end, went to the start"));
             veinNow=0;
         }
         teleportToVein(veinNow);
@@ -275,7 +285,7 @@ public class BlockBreakFinder extends Module {
     public void prevVein(){
         veinNow--;
         if(veinNow==-1){
-            mc.player.sendSystemMessage(Component.literal("Дошёл до начала списка, перешёл в конец"));
+            mc.player.sendSystemMessage(Component.literal("Reached list's start, went to the end"));
             veinNow=veinsArrayList.size()-1;
         }
         teleportToVein(veinNow);
@@ -289,7 +299,7 @@ public class BlockBreakFinder extends Module {
             }
 
             if(veinsArrayList.isEmpty()){
-                mc.player.sendSystemMessage(Component.literal("Список жил пустой!").withColor(TextColor.RED));
+                mc.player.sendSystemMessage(Component.literal("Veins list is empty!").withColor(TextColor.RED));
                 return;
             }
 
@@ -356,15 +366,26 @@ public class BlockBreakFinder extends Module {
         }
         if(((isHandledEndMessage && rows.size() >= maxRowsCount) || rows.size() >= maxRowsCount) && isHandledRowsCountMessage) {
 
-            mc.player.sendSystemMessage(Component.literal("Получил " + rows.size() + " записей"));
+            mc.player.sendSystemMessage(Component.literal("Got " + rows.size() + " rows"));
             stopProcess();
             findVeins();
+            if(excludeType.get()==ExcludeTypes.Mod) excludeUsers();
             teleportToVein(0);
 
 
         }
+    }
 
+    public void excludeUsers(){
+        List<String> excludeUsers = excludeEsersToLookupSetting.get();
+        if(excludeUsers.isEmpty())return;
 
+        ArrayList<Vein>newVeins = new ArrayList<>();
+        for(Vein vein : veinsArrayList){
+            if(excludeUsers.contains(vein.rows.getFirst().getUser()))continue;
+            newVeins.add(vein);
+        }
+        veinsArrayList=newVeins;
     }
 
 
@@ -374,13 +395,13 @@ public class BlockBreakFinder extends Module {
         veinsArrayList.clear();
         checkedRows.clear();
         for(Row row : rows.values()){
-            if(checkedRows.contains(row.coords))continue;
-            checkedRows.add(row.coords);
+            if(checkedRows.contains(row.getCoords()))continue;
+            checkedRows.add(row.getCoords());
             Vein vein = findAllOresINVein(row);
             veinsHashSet.add(vein);
-            //System.out.println("Ключ: " + entry.getKey() + ", Значение: " + entry.getValue());
         }
         veinsArrayList.addAll(veinsHashSet);
+        veinsHashSet.clear();
 
         veinsArrayList.sort(Comparator.comparing(
                 (Vein value) -> value.rows.getFirst().getTimestamp()
@@ -397,14 +418,14 @@ public class BlockBreakFinder extends Module {
         Vein vein = new Vein();
         vein.rows.add(row);
 
-        int[]coords = unpack(row.coords);
-        int bX = coords[0];
-        int bY = coords[1];
-        int bZ = coords[2];
+        int[]coords;
+        int bX;
+        int bY;
+        int bZ;
 
         for(int i = 0; i<vein.rows.size();i++){
             row = vein.rows.get(i);
-            coords = unpack(row.coords);
+            coords = unpack(row.getCoords());
             bX = coords[0];
             bY = coords[1];
             bZ = coords[2];
@@ -416,7 +437,7 @@ public class BlockBreakFinder extends Module {
                             Row temp_row = rows.get(pack(bX+x, bY+y, bZ+z));
                             if(row.getBlock().equals(temp_row.getBlock()) && !vein.rows.contains(temp_row)){
                                 vein.rows.add(temp_row);
-                                checkedRows.add(temp_row.coords);
+                                checkedRows.add(temp_row.getCoords());
                             }
                         }
                     }
@@ -440,7 +461,6 @@ public class BlockBreakFinder extends Module {
         if(Modules.get().isActive(Patrol.class)){
             Modules.get().get(Patrol.class).disable();
         }
-        //sendCoreProtectLookupCommand();
     }
 
     private void updateOres(){
@@ -481,7 +501,6 @@ public class BlockBreakFinder extends Module {
             if (!isHandledStartMessage && checkStartMessage(message.getString())) {
                 isHandledStartMessage = true;
                 isHandledEndMessage = false;
-                //mc.player.sendSystemMessage(Component.literal("Получил start message"));
                 startTicks = 0;
                 return false;
             }
@@ -489,15 +508,13 @@ public class BlockBreakFinder extends Module {
 
             if (checkRowMessage(message.getString()) && !isHandledRow) {
                 if (!isHandledStartMessage || isHandledEndMessage) {
-                    //System.out.println("skip " + count);
                     return false;
                 }
 
                 startTicks = 0;
                 count++;
-                //System.out.println("count: " + count + ". rows: " + rows.size());
 
-                parseSiblings(message, "1");
+                //parseSiblings(message, "1");
                 String block_String = "";
                 String user_String = "";
                 if (message.getSiblings().size() == 2) {
@@ -509,21 +526,18 @@ public class BlockBreakFinder extends Module {
                 }
                 HoverEvent hoverEvent = message.getSiblings().get(0).getStyle().getHoverEvent();
                 HoverEvent.ShowText hoverEventValue = (HoverEvent.ShowText) hoverEvent;
-                long timestamp = convertStringToLong(hoverEventValue.value().getString());
+                long timestamp = convertStringToDate(hoverEventValue.value().getString());
 
                 newRow.setBlock(block_String);
                 newRow.setUser(user_String);
                 newRow.setTimestamp(timestamp);
 
                 isHandledRow = true;
-                //System.out.println("b: " + block_String + ". U: " + user_String + ". T: " + timestamp + ". is: " + isHandledRow);
                 return false;
             } else if (checkCoordsMessage(message.getString())) {
                 if (!isHandledStartMessage || isHandledEndMessage || !isHandledRow) {
-                    //System.out.println("skip coords: isHSM: " + isHandledStartMessage + ". isHEM: " + isHandledEndMessage + ". isHR: " + isHandledRow);
                     return false;
                 }
-                //mc.player.sendSystemMessage(Component.literal("Получил coords Message"));
 
                 startTicks = 0;
 
@@ -547,13 +561,12 @@ public class BlockBreakFinder extends Module {
                 rows.put(pack(x, y, z), newRow);
                 newRow = new Row();
                 isHandledRow = false;
-                //System.out.println("x: " + x + " y: " + y + " z: " + z);
                 return false;
             } else if (!isHandledRowsCountMessage && checkRowsCountMessage(message.getString())) {
                 int rows_count = getRowsCount(message.getString());
                 int maxPages_temp = getPagesCountFromCount(rows_count);
                 maxPages = Math.min(maxPagesAmountSetting.get(), maxPages_temp);
-                mc.player.sendSystemMessage(Component.literal("Макс. записей: " + rows_count + ". Страниц: " + maxPages));
+                mc.player.sendSystemMessage(Component.literal("Max rows amount: " + rows_count + ". Pages: " + maxPages));
                 maxRowsCount = Math.min(maxPages * maxRowsAmountSetting.get(), rows_count);
                 isHandledRowsCountMessage = true;
                 return false;
@@ -592,7 +605,7 @@ public class BlockBreakFinder extends Module {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(string);
 
-        matcher.find();
+        if(!matcher.find())return null;
         int x = Integer.parseInt(matcher.group(1));
         int y = Integer.parseInt(matcher.group(2));
         int z = Integer.parseInt(matcher.group(3));
@@ -602,7 +615,7 @@ public class BlockBreakFinder extends Module {
     }
 
 
-    public long convertStringToLong(String string){
+    public long convertStringToDate(String string){
 
         String regex = "^(\\d{4}(-\\d{2}){2} \\d{2}(:\\d{2}){2})";
 
@@ -738,26 +751,26 @@ public class BlockBreakFinder extends Module {
         else{
             users="";
         }
-
-        String excludeUsers = " exclude:";
-        if(excludeEsersToLookupSetting.get()!=null && !excludeEsersToLookupSetting.get().isEmpty()){
-            for(String username :  excludeEsersToLookupSetting.get()){
-                excludeUsers=excludeUsers+ username;
+        String excludeUsers = "";
+        if(excludeType.get()==ExcludeTypes.Command) {
+            if (excludeEsersToLookupSetting.get() != null && !excludeEsersToLookupSetting.get().isEmpty()) {
+                excludeUsers = " exclude:";
+                for (String username : excludeEsersToLookupSetting.get()) {
+                    if(!excludeUsers.isEmpty())excludeUsers = excludeUsers + ",";
+                    excludeUsers = excludeUsers + username;
+                }
             }
-        }
-        else{
-            excludeUsers="";
         }
         String command = "co l a:-block t:"+ timeToLookupSetting.get()+users+excludeUsers+radius+" i:"+blocks_string+" rows: "+ maxRowsAmountSetting.get();
         if(!isSentCountCommand){
             command = command + " #count";
             isSentCountCommand=true;
-            mc.player.sendOverlayMessage(Component.literal("Отправил запрос на #count").withColor(TextColor.GREEN));
+            mc.player.sendOverlayMessage(Component.literal("Send coreprotect #count lookup").withColor(TextColor.GREEN));
 
         }
         else{
             isSentLookupCommand=true;
-            mc.player.sendOverlayMessage(Component.literal("Отправил запрос на получение записей блоков").withColor(TextColor.GREEN));
+            mc.player.sendOverlayMessage(Component.literal("Send coreprotect lookup command").withColor(TextColor.GREEN));
         }
         if(command.length()>255){
             mc.player.sendSystemMessage(Component.literal("Error, command size cant be more that 255").withColor(TextColor.RED));
@@ -819,7 +832,7 @@ public class BlockBreakFinder extends Module {
 
     public static void addVeinBlocks(ArrayList<Row>rows){
         for(Row row : rows){
-            int[] coords = unpack(row.coords);
+            int[] coords = unpack(row.getCoords());
             int x = coords[0], y = coords[1], z = coords[2];
             addBlock(new BlockPos(x,y,z),true);
         }
@@ -828,7 +841,6 @@ public class BlockBreakFinder extends Module {
     public static void addBlock(BlockPos blockPos, boolean update) {
         ESPBlock block = new ESPBlock(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 
-        //if (blocks == null) blocks = new Long2ObjectOpenHashMap<>(64);
         blocks.add(block);
 
         if (update) block.update();
@@ -840,9 +852,7 @@ public class BlockBreakFinder extends Module {
 
 
     public void tracer(Render3DEvent event, double[]coords_1, double[]coords_2) {
-        //count = 0;
 
-        //for (Entity entity : mc.level.entitiesForRendering()) {
         double x_1 = coords_1[0], y_1 = coords_1[1], z_1 = coords_1[2];
         double x_2 = coords_2[0], y_2 = coords_2[1], z_2 = coords_2[2];
 
@@ -862,109 +872,6 @@ public class BlockBreakFinder extends Module {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    public class Coords{
-        private int x;
-        private int y;
-        private int z;
-
-        String world;
-        public Coords(int x, int y, int z, String world) {
-            this.x = x;
-            this.y = y;
-            this.z = z;
-            this.world = world;
-        }
-        public int getX(){
-            return x;
-        }
-        public int getY(){return y;}
-        public int getZ(){return z;}
-        public String getWorld(){return world;}
-    }
-
-    public class Row{
-        private Long coords;
-        private String block;
-        private String user;
-        private long timestamp;
-        private String world;
-        public Row(Long coords,String block, String user, long timestamp, String world){
-            this.block = block;
-            this.coords=coords;
-            this.user = user;
-            this.timestamp = timestamp;
-            this.world = world;
-        }
-        public Row(){};
-
-        public void setBlock(String block){
-            this.block = block;
-        }
-        public String getBlock(){
-            return this.block;
-        }
-
-        public void setUser(String user){
-            this.user = user;
-        }
-        public String getUser(){return this.user;}
-
-        public void setTimestamp(long timestamp){
-            this.timestamp = timestamp;
-        }
-        public long getTimestamp(){return this.timestamp;}
-
-        public void setWorld(String world){
-            this.world = world;
-        }
-        public String getWrld(){return this.world;}
-
-        public void setCoords(Long coords){
-            this.coords=coords;
-        }
-        public Long getCoords(){return this.coords;}
-
-
-    }
-
-
-    public class Vein{
-        public int id;
-        public ArrayList<Row>rows = new ArrayList<>();
-        public int size;
-        public boolean isRemoved = false;
-        public Vein(ArrayList<Row> rows,int size){
-            this.rows=rows;
-            this.size=size;
-        }
-        public Vein(){}
-
-    }
 
     public static long pack(int x, int y, int z) {
         // Смещаем Y в положительный диапазон (например, +64)
@@ -1009,7 +916,7 @@ public class BlockBreakFinder extends Module {
     public static void removePlayer(String username){
         ArrayList<Vein>newVeins =  new ArrayList<>();
         for(Vein vein : veinsArrayList){
-            if(!vein.rows.getFirst().user.equals(username)){
+            if(!vein.rows.getFirst().getUser().equals(username)){
                 newVeins.add(vein);
             }
         }

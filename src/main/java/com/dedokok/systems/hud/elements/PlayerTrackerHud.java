@@ -6,16 +6,12 @@
 package com.dedokok.systems.hud.elements;
 
 import com.dedokok.settings.*;
-import com.dedokok.settings.classes.PlayerNote;
+import com.dedokok.utils.classes.PlayerNote;
 import com.dedokok.systems.hud.*;
 import com.dedokok.systems.modules.Feature.PlayerTracker;
-import com.dedokok.systems.modules.Feature.PlayersNoteBook;
-import com.dedokok.systems.modules.Module;
 import com.dedokok.systems.modules.Modules;
 import com.dedokok.utils.render.color.Color;
 import com.dedokok.utils.render.color.SettingColor;
-
-import java.util.List;
 
 public class PlayerTrackerHud extends HudElement {
     public static final HudElementInfo<PlayerTrackerHud> INFO = new HudElementInfo<>(Hud.GROUP, "player-tracker", "Player Tracker HUD", PlayerTrackerHud::new);

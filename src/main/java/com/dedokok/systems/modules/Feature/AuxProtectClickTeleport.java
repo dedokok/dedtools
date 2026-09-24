@@ -44,7 +44,8 @@ public class AuxProtectClickTeleport extends Module {
 
             List<Component> siblings = message.getSiblings();
             int lastIndex = siblings.size() - 1;
-            Component wrapper = siblings.get(lastIndex); // "\n                 "
+            Component wrapper = siblings.get(lastIndex);
+            // "\n                 "
 
             List<Component> wrapperSiblings = wrapper.getSiblings();
             int coordsIndex = wrapperSiblings.size() - 1;
@@ -55,19 +56,11 @@ public class AuxProtectClickTeleport extends Module {
                     .withHoverEvent(new HoverEvent.ShowText(Component.literal(command)))
             );
 
-            // Пересобираем wrapper: пустой текст + все старые siblings, но с заменённым последним
-            MutableComponent newWrapper = wrapper.copy().withStyle(wrapper.getStyle());
-            // copy() уже клонирует siblings, но они всё ещё те же ссылки —
-            // поэтому строим wrapper с нуля вместо копирования:
-            newWrapper = Component.literal(((MutableComponent) wrapper).getString().isEmpty() ? "" : "")
-                    .withStyle(wrapper.getStyle());
-            // Проще — берём текст напрямую через компонентную структуру:
             MutableComponent rebuiltWrapper = MutableComponent.create(wrapper.getContents()).withStyle(wrapper.getStyle());
             for (int i = 0; i < wrapperSiblings.size(); i++) {
                 rebuiltWrapper.append(i == coordsIndex ? updatedCoords : wrapperSiblings.get(i));
             }
 
-            // Пересобираем message аналогично
             MutableComponent rebuiltMessage = MutableComponent.create(message.getContents()).withStyle(message.getStyle());
             for (int i = 0; i < siblings.size(); i++) {
                 rebuiltMessage.append(i == lastIndex ? rebuiltWrapper : siblings.get(i));

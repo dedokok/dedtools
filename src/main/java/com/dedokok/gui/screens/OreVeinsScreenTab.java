@@ -13,6 +13,7 @@ import com.dedokok.systems.modules.Category;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
 import com.dedokok.systems.modules.Module;
 import com.dedokok.systems.modules.Modules;
+import com.dedokok.utils.classes.Row;
 import com.dedokok.utils.misc.NbtUtils;
 import com.dedokok.utils.render.DisplayItemUtils;
 import com.mojang.blaze3d.platform.MacosUtil;
@@ -41,7 +42,7 @@ public class OreVeinsScreenTab extends TabScreen {
     private WCategoryController controller;
     private WWindow searchWindow;
     private WTextBox searchTextBox;
-    private static HashMap<Long, BlockBreakFinder.Row> rows = new HashMap<>();
+    private static HashMap<Long, Row> rows = new HashMap<>();
 
     public OreVeinsScreenTab(GuiTheme theme) {
         super(theme, Tabs.get().getFirst());
@@ -65,17 +66,17 @@ public class OreVeinsScreenTab extends TabScreen {
         //controller.refresh();
     }
 
-    public void setRows(HashMap<Long, BlockBreakFinder.Row> rows) {
+    public void setRows(HashMap<Long, Row> rows) {
         OreVeinsScreenTab.rows = rows;
     }
 
 
     private WTable table;
-    public void setVeins(HashMap<Long, BlockBreakFinder.Row> rows){
+    public void setVeins(HashMap<Long, Row> rows){
         for (long coords : rows.keySet()) {
             //if (setting.filter != null && !setting.filter.test(block)) continue;
             //if (skipValue(block)) continue;
-            BlockBreakFinder.Row row =  rows.get(coords);
+            Row row =  rows.get(coords);
 
             int[] coords_mass = unpack(coords);
             int x = coords_mass[0], y = coords_mass[1], z = coords_mass[2];

@@ -1,14 +1,10 @@
 package com.dedokok.systems.modules.Feature;
-import com.dedokok.events.world.TickEvent;
 import com.dedokok.gui.utils.StarscriptTextBoxRenderer;
 import com.dedokok.settings.*;
-import com.dedokok.settings.classes.PlayerNote;
+import com.dedokok.utils.classes.PlayerNote;
 import com.dedokok.systems.modules.Categories;
 import com.dedokok.systems.modules.Module;
-import com.dedokok.systems.modules.Modules;
-import meteordevelopment.orbit.EventHandler;
 
-import java.util.HashSet;
 import java.util.List;
 
 public class PlayersNoteBook extends Module {

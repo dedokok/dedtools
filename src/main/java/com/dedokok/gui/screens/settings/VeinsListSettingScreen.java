@@ -13,6 +13,7 @@ import com.dedokok.gui.widgets.input.WTextBox;
 import com.dedokok.gui.widgets.pressable.WPressable;
 import com.dedokok.settings.VeinsListSetting;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
+import com.dedokok.utils.classes.Vein;
 import com.dedokok.utils.render.DisplayItemUtils;
 import com.mojang.blaze3d.platform.MacosUtil;
 import meteordevelopment.orbit.EventHandler;
@@ -33,7 +34,7 @@ import java.util.function.Predicate;
 import static com.dedokok.DedTools.mc;
 import static org.lwjgl.glfw.GLFW.*;
 
-public class VeinsListSettingScreen extends CollectionContainerSettingScreen<BlockBreakFinder.Vein> {
+public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Vein> {
     public VeinsListSettingScreen(GuiTheme theme, VeinsListSetting setting) {
         super(theme, "All veins", setting, BlockBreakFinder.veinsArrayList, BlockBreakFinder.veinsArrayList);
     }
@@ -41,7 +42,7 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Blo
 
 
     @Override
-    protected WWidget getValueWidget(BlockBreakFinder.Vein value) {
+    protected WWidget getValueWidget(Vein value) {
         if(value.isRemoved)return null;
         Identifier itemId = Identifier.parse(value.rows.getFirst().getBlock());
 
@@ -74,7 +75,7 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Blo
     }
 
     @Override
-    protected String[] getValueNames(BlockBreakFinder.Vein value) {
+    protected String[] getValueNames(Vein value) {
         return new String[]{
                 value.rows.getFirst().getUser(),
                 //BuiltInRegistries.BLOCK.getKey(BuiltInRegistries.BLOCK.getValue(Identifier.parse(value.getBlock()))).toString(),
@@ -82,9 +83,9 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Blo
     }
 
     @Override
-    protected boolean includeValue(BlockBreakFinder.Vein value) {
+    protected boolean includeValue(Vein value) {
 
-        Predicate<BlockBreakFinder.Vein> filter = ((VeinsListSetting) setting).filter;
+        Predicate<Vein> filter = ((VeinsListSetting) setting).filter;
         if (filter == null) return BuiltInRegistries.BLOCK.getValue(Identifier.parse(value.rows.getFirst().getBlock())) != Blocks.AIR;
         return filter.test(value);
     }
@@ -112,7 +113,7 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Blo
 
 
     @Override
-    protected Long getTimestamp(BlockBreakFinder.Vein value){
+    protected Long getTimestamp(Vein value){
         return value.rows.getFirst().getTimestamp();
     }
 
@@ -123,7 +124,7 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Blo
     double item_y = -1;
     boolean needItemMouse = false;
 
-    public BlockBreakFinder.Vein targetVein = null;
+    public Vein targetVein = null;
 
     public void closeWidget(){
         isRender=false;

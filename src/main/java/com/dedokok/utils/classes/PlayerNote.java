@@ -1,4 +1,4 @@
-package com.dedokok.settings.classes;
+package com.dedokok.utils.classes;
 
 public class PlayerNote{
     public String username;

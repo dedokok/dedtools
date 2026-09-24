@@ -24,6 +24,7 @@ import com.dedokok.gui.widgets.pressable.WPressable;
 import com.dedokok.settings.Setting;
 import com.dedokok.systems.config.Config;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
+import com.dedokok.utils.classes.Vein;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -51,9 +52,9 @@ public abstract class CollectionContainerSettingScreen<T> extends WindowScreen {
 
     //protected abstract String[] getValueNames(Block value);
 
-    protected abstract boolean includeValue(BlockBreakFinder.Vein value);
+    protected abstract boolean includeValue(Vein value);
 
-    //protected abstract BlockBreakFinder.Row getAdditionalValue(BlockBreakFinder.Row value);
+    //protected abstract Row getAdditionalValue(Row value);
 
     public boolean isUpdatedScreen = false;
 
