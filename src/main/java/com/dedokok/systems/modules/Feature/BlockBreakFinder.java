@@ -275,7 +275,7 @@ public class BlockBreakFinder extends Module {
         if(mc==null || mc.player==null)return;
         //mc.player.sendSystemMessage(Component.literal("next"));
         veinNow++;
-        if(veinNow==veinsArrayList.size()){
+        if(veinNow>=veinsArrayList.size()){
             mc.player.sendSystemMessage(Component.literal("Reached list's end, went to the start"));
             veinNow=0;
         }
@@ -335,7 +335,13 @@ public class BlockBreakFinder extends Module {
             //veinsPlayerNow = getPlayerVeins(prevUsername);
         }
 
-        if(!veinsArrayList.isEmpty()){
+        if(veinNow >- veinsArrayList.size()){
+            veinNow=veinsArrayList.size()-1;
+            nextVein();
+        }
+
+
+        if(!veinsArrayList.isEmpty() && veinNow<veinsArrayList.size()){
             if(!prevUsername.equals(veinsArrayList.get(veinNow).rows.getFirst().getUser())) {
                 prevUsername = veinsArrayList.get(veinNow).rows.getFirst().getUser();
                 veinsPlayerNow = getPlayerVeins(prevUsername);

@@ -122,7 +122,7 @@ public class VeinHud extends HudElement {
             String size_string = "Количество блоков: " + vein.rows.size();
             updateSize(renderer, size_string,false);
 
-            String id_string = "Id: " + vein.id+"/"+BlockBreakFinder.veinsArrayList.size();
+            String id_string = "Id: " + vein.id+"/"+(BlockBreakFinder.veinsArrayList.size()-1);
             updateSize(renderer, id_string,false);
         }
 
