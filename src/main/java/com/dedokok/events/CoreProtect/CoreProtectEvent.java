@@ -9,6 +9,7 @@ public class CoreProtectEvent {
     public static class Row extends Cancellable {
         protected static final Row INSTANCE = new Row();
         public MessagesTypes type;
+
         public Component message;
         public String username;
         public Long time;
