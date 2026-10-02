@@ -6,6 +6,7 @@
 package com.dedokok.gui;
 
 import com.dedokok.renderer.Fonts;
+import com.dedokok.utils.classes.EntityTypeLimit;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import com.dedokok.gui.renderer.GuiRenderer;
@@ -31,10 +32,7 @@ import org.apache.commons.lang3.Strings;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.DoubleConsumer;
 
 import static com.dedokok.DedTools.mc;
@@ -64,6 +62,8 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         factories.put(ItemSetting.class, (table, setting) -> itemW(table, (ItemSetting) setting));
         factories.put(ItemListSetting.class, (table, setting) -> itemListW(table, (ItemListSetting) setting));
         factories.put(EntityTypeListSetting.class, (table, setting) -> entityTypeListW(table, (EntityTypeListSetting) setting));
+        factories.put(EntityTypeLimitsSetting.class, (table, setting) -> entityTypeLimitsW(table, (EntityTypeLimitsSetting) setting));
+
         factories.put(TestSetting.class, (table, setting) -> testSettingScreenW(table, (TestSetting) setting));
         factories.put(EnchantmentListSetting.class, (table, setting) -> enchantmentListW(table, (EnchantmentListSetting) setting));
         factories.put(ModuleListSetting.class, (table, setting) -> moduleListW(table, (ModuleListSetting) setting));
@@ -354,6 +354,10 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         selectW(table, setting, () -> mc.gui.setScreen(new EntityTypeListSettingScreen(theme, setting)));
     }
 
+    private void entityTypeLimitsW(WTable table, EntityTypeLimitsSetting setting) {
+        selectW3(table, setting, () -> mc.gui.setScreen(new EntityTypeLimitsSettingScreen(theme, setting)));
+    }
+
     private void testSettingScreenW(WTable table, TestSetting setting) {
         selectW(table, setting, () -> mc.gui.setScreen(new TestSettingScreen(theme, setting)));
     }
@@ -592,6 +596,23 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         reset(c, setting, null);
     }
 
+    private void selectW3(WContainer c, Setting<? extends Set<EntityTypeLimit>> setting, Runnable action) {
+        boolean addCount = WSelectedCountLabel.getSize2(setting) != -1;
+
+        WContainer c2 = c;
+        if (addCount) {
+            c2 = c.add(theme.horizontalList()).expandCellX().widget();
+            ((WHorizontalList) c2).spacing *= 2;
+        }
+
+        WButton button = c2.add(theme.button("Select")).expandCellX().widget();
+        button.action = action;
+        WSelectedCountLabel label2 = new WSelectedCountLabel(setting);
+        if (addCount) c2.add(label2.color(theme.textSecondaryColor()));
+
+        reset(c, setting, null);
+    }
+
     private void reset(WContainer c, Setting<?> setting, Runnable action) {
         WButton reset = c.add(theme.button(GuiRenderer.RESET)).widget();
         reset.action = () -> {
@@ -613,7 +634,14 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
 
         @Override
         protected void onRender(GuiRenderer renderer, double mouseX, double mouseY, double delta) {
-            int size = getSize(setting);
+            int size=0;
+
+            if(setting instanceof EntityTypeLimitsSetting setting_2){
+                size = getSize2((Setting<? extends Set<EntityTypeLimit>>) setting);
+            }
+            else{
+                size = getSize(setting);
+            }
 
             if (size != lastSize) {
                 set("(" + size + " selected)");
@@ -626,6 +654,18 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         public static int getSize(Setting<?> setting) {
             if (setting.get() instanceof Collection<?> collection) return collection.size();
             if (setting.get() instanceof Map<?, ?> map) return map.size();
+
+            return -1;
+        }
+
+        public static int getSize2(Setting<? extends Set<EntityTypeLimit>> setting) {
+            if (setting.get() instanceof Collection<? extends EntityTypeLimit> collection) {
+                int count = 0;
+                for(EntityTypeLimit limit : collection){
+                    if(limit.isEnabled)count++;
+                }
+                return count;
+            }
 
             return -1;
         }

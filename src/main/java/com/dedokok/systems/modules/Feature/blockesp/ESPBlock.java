@@ -43,6 +43,7 @@ public class ESPBlock {
 
 
     public void render(Render3DEvent event, Color color) {
+        if(mc==null || mc.level==null || state==null)return;
         double x1 = x;
         double y1 = y;
         double z1 = z;

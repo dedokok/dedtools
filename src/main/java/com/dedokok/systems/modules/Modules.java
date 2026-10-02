@@ -6,6 +6,7 @@
 package com.dedokok.systems.modules;
 
 import com.dedokok.DedTools;
+import com.dedokok.events.CoreProtect.CoreProtectOnMessage;
 import com.dedokok.systems.modules.Feature.*;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -83,16 +84,18 @@ public class Modules extends System<Modules> {
         AuxProtectClickTeleport APCT = new AuxProtectClickTeleport();
         ClientReceiveMessageEvents.MODIFY_GAME.register(APCT::onGameMessage);
 
-        BlockBreakFinder BBF = new BlockBreakFinder();
-        ClientReceiveMessageEvents.ALLOW_GAME.register(BBF::onGameMessage);
-
         MessageAnnouncement MA = new MessageAnnouncement();
         ClientReceiveMessageEvents.GAME.register(MA::onGameMessage);
+
+        CoreProtectOnMessage CPOM = new CoreProtectOnMessage();
+        ClientReceiveMessageEvents.ALLOW_GAME.register(CPOM::onMessage);
+
+
 
 
         add(aR);
         add(CCM);
-        add(BBF);
+        add(new BlockBreakFinder());
         add(DP);
         add(APCT);
         add(MA);
@@ -105,6 +108,8 @@ public class Modules extends System<Modules> {
         add(new PlayerStats());
         add(new Patrol());
         add(new PlayersNoteBook());
+        add(new EntitiesInChunk());
+        add(new TestModule());
     }
 
 

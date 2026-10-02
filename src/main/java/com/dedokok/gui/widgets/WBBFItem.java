@@ -99,6 +99,7 @@ public class WBBFItem extends WItem {
                 BlockBreakFinder.teleported_vein = BlockBreakFinder.veinsArrayList.get(id);
                 BlockBreakFinder.veinNow = id;
                 mc.player.connection.sendCommand("co teleport " + world + " " + block_x + " " + block_y + " " + block_z);
+                BlockBreakFinder.waitForTPMessage=true;
             }
             if (event.button() == 1) {
                 screen.openWidget(id);

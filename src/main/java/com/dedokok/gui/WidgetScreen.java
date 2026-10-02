@@ -6,7 +6,6 @@
 package com.dedokok.gui;
 
 import com.dedokok.gui.screens.settings.VeinsListSettingScreen;
-import com.dedokok.systems.modules.Feature.CoordMaster;
 import com.mojang.blaze3d.platform.MacosUtil;
 import com.dedokok.DedTools;
 import com.dedokok.gui.renderer.GuiDebugRenderer;

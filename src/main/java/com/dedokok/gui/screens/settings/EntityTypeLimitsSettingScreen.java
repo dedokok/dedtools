@@ -5,7 +5,6 @@
 
 package com.dedokok.gui.screens.settings;
 
-import com.mojang.blaze3d.textures.FilterMode;
 import com.dedokok.gui.GuiTheme;
 import com.dedokok.gui.WindowScreen;
 import com.dedokok.gui.utils.Cell;
@@ -16,10 +15,13 @@ import com.dedokok.gui.widgets.containers.WVerticalList;
 import com.dedokok.gui.widgets.input.WTextBox;
 import com.dedokok.gui.widgets.pressable.WCheckbox;
 import com.dedokok.renderer.Texture;
+import com.dedokok.settings.EntityTypeLimitsSetting;
 import com.dedokok.settings.EntityTypeListSetting;
 import com.dedokok.utils.Utils;
+import com.dedokok.utils.classes.EntityTypeLimit;
 import com.dedokok.utils.misc.Names;
 import com.dedokok.utils.render.DisplayItemUtils;
+import com.mojang.blaze3d.textures.FilterMode;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.world.entity.EntityType;
@@ -29,12 +31,13 @@ import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
-public class EntityTypeListSettingScreen extends WindowScreen {
+public class EntityTypeLimitsSettingScreen extends WindowScreen {
     private static Texture EMPTY_SPAWN_EGG_TEXTURE;
 
-    private final EntityTypeListSetting setting;
+    private final EntityTypeLimitsSetting setting;
 
     private WVerticalList list;
     private final WTextBox filter;
@@ -45,7 +48,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
     private WTable animalsT, waterAnimalsT, monstersT, ambientT, miscT;
     int hasAnimal = 0, hasWaterAnimal = 0, hasMonster = 0, hasAmbient = 0, hasMisc = 0;
 
-    public EntityTypeListSettingScreen(GuiTheme theme, EntityTypeListSetting setting) {
+    public EntityTypeLimitsSettingScreen(GuiTheme theme, EntityTypeLimitsSetting setting) {
         super(theme, "Select entities");
         this.setting = setting;
 
@@ -72,14 +75,16 @@ public class EntityTypeListSettingScreen extends WindowScreen {
     public void initWidgets() {
         hasAnimal = hasWaterAnimal = hasMonster = hasAmbient = hasMisc = 0;
 
-        for (EntityType<?> entityType : setting.get()) {
-            if (setting.filter == null || setting.filter.test(entityType)) {
-                switch (entityType.getCategory()) {
-                    case CREATURE -> hasAnimal++;
-                    case WATER_AMBIENT, WATER_CREATURE, UNDERGROUND_WATER_CREATURE, AXOLOTLS -> hasWaterAnimal++;
-                    case MONSTER -> hasMonster++;
-                    case AMBIENT -> hasAmbient++;
-                    case MISC -> hasMisc++;
+        for (EntityTypeLimit entityType : setting.get()) {
+            if(entityType.isEnabled) {
+                if (setting.filter == null || setting.filter.test(entityType)) {
+                    switch (entityType.type.getCategory()) {
+                        case CREATURE -> hasAnimal++;
+                        case WATER_AMBIENT, WATER_CREATURE, UNDERGROUND_WATER_CREATURE, AXOLOTLS -> hasWaterAnimal++;
+                        case MONSTER -> hasMonster++;
+                        case AMBIENT -> hasAmbient++;
+                        case MISC -> hasMisc++;
+                    }
                 }
             }
         }
@@ -87,17 +92,17 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         boolean first = animals == null;
 
         // Animals
-        List<EntityType<?>> animalsE = new ArrayList<>();
+        List<EntityTypeLimit> animalsE = new ArrayList<>();
         WCheckbox animalsC = theme.checkbox(hasAnimal > 0);
 
         animals = theme.section("Animals", animals != null && animals.isExpanded(), animalsC);
-        animalsC.action = () -> tableChecked(animalsE, animalsC.checked);
+        //animalsC.action = () -> tableChecked(animalsE, animalsC.checked);
 
         Cell<WSection> animalsCell = add(animals).expandX();
         animalsT = animals.add(theme.table()).expandX().widget();
 
         // Water animals
-        List<EntityType<?>> waterAnimalsE = new ArrayList<>();
+        List<EntityTypeLimit> waterAnimalsE = new ArrayList<>();
         WCheckbox waterAnimalsC = theme.checkbox(hasWaterAnimal > 0);
 
         waterAnimals = theme.section("Water Animals", waterAnimals != null && waterAnimals.isExpanded(), waterAnimalsC);
@@ -107,7 +112,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         waterAnimalsT = waterAnimals.add(theme.table()).expandX().widget();
 
         // Monsters
-        List<EntityType<?>> monstersE = new ArrayList<>();
+        List<EntityTypeLimit> monstersE = new ArrayList<>();
         WCheckbox monstersC = theme.checkbox(hasMonster > 0);
 
         monsters = theme.section("Monsters", monsters != null && monsters.isExpanded(), monstersC);
@@ -117,7 +122,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         monstersT = monsters.add(theme.table()).expandX().widget();
 
         // Ambient
-        List<EntityType<?>> ambientE = new ArrayList<>();
+        List<EntityTypeLimit> ambientE = new ArrayList<>();
         WCheckbox ambientC = theme.checkbox(hasAmbient > 0);
 
         ambient = theme.section("Ambient", ambient != null && ambient.isExpanded(), ambientC);
@@ -127,7 +132,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         ambientT = ambient.add(theme.table()).expandX().widget();
 
         // Misc
-        List<EntityType<?>> miscE = new ArrayList<>();
+        List<EntityTypeLimit> miscE = new ArrayList<>();
         WCheckbox miscC = theme.checkbox(hasMisc > 0);
 
         misc = theme.section("Misc", misc != null && misc.isExpanded(), miscC);
@@ -141,9 +146,9 @@ public class EntityTypeListSettingScreen extends WindowScreen {
             .filter(item -> item.builtInRegistryHolder().areComponentsBound() && item.components().has(DataComponents.ENTITY_DATA))
             .toList();
 
-        Consumer<EntityType<?>> entityTypeForEach = entityType -> {
+        Consumer<EntityTypeLimit> entityTypeForEach = entityType -> {
             if (setting.filter == null || setting.filter.test(entityType)) {
-                switch (entityType.getCategory()) {
+                switch (entityType.type.getCategory()) {
                     case CREATURE -> {
                         animalsE.add(entityType);
                         addEntityType(animalsT, animalsC, entityType, spawnEggItems);
@@ -170,7 +175,15 @@ public class EntityTypeListSettingScreen extends WindowScreen {
 
         // Sort all entities
         if (filterText.isEmpty()) {
-            BuiltInRegistries.ENTITY_TYPE.forEach(entityTypeForEach);
+            BuiltInRegistries.ENTITY_TYPE.forEach(type -> {
+
+
+                EntityTypeLimit entityTypeLimit = getEntityTypeLimitByType(type);
+                if(entityTypeLimit == null) {
+                    entityTypeLimit=new EntityTypeLimit(type,-1);
+                }
+                entityTypeForEach.accept(entityTypeLimit);
+            });
         } else {
             record DiffByType(EntityType<?> type, int diff) {}
             List<DiffByType> entities = new ArrayList<>();
@@ -182,8 +195,19 @@ public class EntityTypeListSettingScreen extends WindowScreen {
                 if (words > 0 || diff < text.length() / 2) entities.add(new DiffByType(entity, diff));
             });
             entities.sort(Comparator.comparingInt(DiffByType::diff));
-            for (var pair : entities) entityTypeForEach.accept(pair.type);
+            for (var pair : entities) {
+                //int limit = getLimitByType(pair.type);
+                EntityTypeLimit typeLimit = getEntityTypeLimitByType(pair.type);
+                if(typeLimit == null) {
+                    typeLimit = new EntityTypeLimit(pair.type,-1);
+                }
+                //EntityTypeLimit entityTypeLimit = new EntityTypeLimit(pair.type,limit);
+                entityTypeForEach.accept(typeLimit);
+            }
         }
+
+        animalsC.action      = () -> tableChecked(animalsE, animalsC.checked);
+
 
         if (animalsT.cells.isEmpty()) list.cells.remove(animalsCell);
         if (waterAnimalsT.cells.isEmpty()) list.cells.remove(waterAnimalsCell);
@@ -210,17 +234,34 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         }
     }
 
-    private void tableChecked(List<EntityType<?>> entityTypes, boolean checked) {
+    public int getLimitByType(EntityType<?> type) {
+        Set<EntityTypeLimit> limits = setting.get();
+        int limit = -1;
+        for(EntityTypeLimit entity_type : limits){
+            if(entity_type.type.equals(type)){
+                limit=entity_type.limit;
+                break;
+            }
+        }
+        return limit;
+    }
+
+    private void tableChecked(List<EntityTypeLimit> entityTypes, boolean checked) {
         boolean changed = false;
 
-        for (EntityType<?> entityType : entityTypes) {
+        for (EntityTypeLimit entityType : entityTypes) {
+            entityType.isEnabled=checked;
             if (checked) {
-                setting.get().add(entityType);
+                //setting.get().add(new EntityTypeLimit(entityType.type,entityType.limit));
+
+                addToSetting(entityType);
                 changed = true;
             } else {
-                if (setting.get().remove(entityType)) {
-                    changed = true;
-                }
+                //entityType.isEnabled=false;
+                //if (removeType(entityType.type)) {
+                addToSetting(entityType);
+                changed = true;
+                //}
             }
         }
 
@@ -231,7 +272,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
         }
     }
 
-    private void addEntityType(WTable table, WCheckbox tableCheckbox, EntityType<?> entityType, List<Item> spawnEggItems) {
+    private void addEntityType(WTable table, WCheckbox tableCheckbox, EntityTypeLimit entityType, List<Item> spawnEggItems) {
         // Icon
 
         ItemStack stack = null;
@@ -240,7 +281,7 @@ public class EntityTypeListSettingScreen extends WindowScreen {
             var component = item.components().get(DataComponents.ENTITY_DATA);
 
             //noinspection DataFlowIssue
-            if (component.type() == entityType) {
+            if (component.type() == entityType.type) {
                 stack = DisplayItemUtils.toStack(item);
                 break;
             }
@@ -257,15 +298,48 @@ public class EntityTypeListSettingScreen extends WindowScreen {
 
         // Name
 
-        table.add(theme.label(Names.get(entityType)));
+        table.add(theme.label(Names.get(entityType.type)));
+
+
+        //textbox
+        String limit_string = entityType.limit == -1 ? "" : ""+entityType.limit;
+        WTextBox value = table.add(theme.textBox(limit_string)).minWidth(50).right().widget();
+        value.action = () -> {
+            int limit = -1;
+            try{
+                limit = Integer.parseInt(value.get());
+            }
+            catch (NumberFormatException e){
+            }
+            entityType.limit=limit;
+            addToSetting(entityType);
+        };
+
+
 
         // Checkbox
 
-        WCheckbox a = table.add(theme.checkbox(setting.get().contains(entityType))).expandCellX().right().widget();
+//        boolean isContains = false;
+//        for(EntityTypeLimit type_limit : setting.get()){
+//            if(type_limit.type.equals(entityType.type)){
+//                isContains = true;
+//                break;
+//            }
+//        }
+        boolean isContains = entityType.isEnabled;
+
+        WCheckbox a = table.add(theme.checkbox(isContains)).expandCellX().right().widget();
         a.action = () -> {
             if (a.checked) {
-                setting.get().add(entityType);
-                switch (entityType.getCategory()) {
+                entityType.isEnabled=true;
+//                if(getEntityTypeLimitByType(entityType.type)!=null){
+//                    EntityTypeLimit entityTypeLimit = getEntityTypeLimitByType(entityType.type);
+//
+//                }
+//                setting.get().add(entityType);/////////////////////
+                addToSetting(entityType);
+
+                switch (entityType.type.getCategory()) {
                     case CREATURE -> {
                         if (hasAnimal == 0) tableCheckbox.checked = true;
                         hasAnimal++;
@@ -288,8 +362,10 @@ public class EntityTypeListSettingScreen extends WindowScreen {
                     }
                 }
             } else {
-                if (setting.get().remove(entityType)) {
-                    switch (entityType.getCategory()) {
+                //if (removeType(entityType.type)) {
+                entityType.isEnabled=false;
+                addToSetting(entityType);
+                    switch (entityType.type.getCategory()) {
                         case CREATURE -> {
                             hasAnimal--;
                             if (hasAnimal == 0) tableCheckbox.checked = false;
@@ -311,12 +387,49 @@ public class EntityTypeListSettingScreen extends WindowScreen {
                             if (hasMisc == 0) tableCheckbox.checked = false;
                         }
                     }
-                }
+                //}
             }
 
             setting.onChanged();
         };
 
         table.row();
+    }
+
+    public boolean addToSetting(EntityTypeLimit entityTypeLimit) {
+        EntityTypeLimit oldLimit = null;
+        for(EntityTypeLimit limit  : setting.get()){
+            if(limit.type.equals(entityTypeLimit.type)){
+                oldLimit = limit;
+                break;
+            }
+        }
+        if(oldLimit != null){
+            setting.get().remove(oldLimit);
+        }
+        setting.get().add(entityTypeLimit);
+        return true;
+    }
+
+    public boolean removeType(EntityType<?>type){
+        EntityTypeLimit toRemove =  null;
+        for(EntityTypeLimit type_limit : setting.get()){
+            if(type_limit.type.equals(type)){
+                toRemove = type_limit;
+                break;
+            }
+        }
+        if(toRemove!=null){
+            return setting.get().remove(toRemove);
+        }
+        return false;
+    }
+    public EntityTypeLimit getEntityTypeLimitByType(EntityType<?> type){
+        for(EntityTypeLimit type_limit : setting.get()){
+            if(type_limit.type.equals(type)){
+                return type_limit;
+            }
+        }
+        return null;
     }
 }

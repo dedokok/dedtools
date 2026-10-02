@@ -130,6 +130,7 @@ public class Hud extends System<Hud> implements Iterable<HudElement> {
         register(PlayerTrackerHud.INFO);
         register(PlayerStatsHud.INFO);
         register(VeinHud.INFO);
+        register(EntitiesInChunkHud.INFO);
 
         // Default config
         if (isFirstInit) resetToDefaultElements();

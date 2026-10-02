@@ -1,5 +1,6 @@
 package com.dedokok.systems.modules.Feature;
 
+import com.dedokok.events.CoreProtect.CoreProtectEvent;
 import com.dedokok.events.render.Render3DEvent;
 import com.dedokok.events.world.TickEvent;
 import com.dedokok.settings.*;
@@ -8,6 +9,7 @@ import com.dedokok.systems.modules.Feature.blockesp.ESPBlock;
 import com.dedokok.systems.modules.Module;
 import com.dedokok.systems.modules.Modules;
 import com.dedokok.utils.classes.Coords;
+import com.dedokok.utils.classes.CoreProtect.MessagesTypes;
 import com.dedokok.utils.classes.Row;
 import com.dedokok.utils.classes.Vein;
 import com.dedokok.utils.misc.Keybind;
@@ -64,7 +66,7 @@ public class BlockBreakFinder extends Module {
     public static HashSet<Vein>veinsHashSet = new HashSet<>();
     public static ArrayList<Vein>veinsArrayList = new ArrayList<>();
 
-    public boolean waitForTPMessage = false;
+    public static boolean waitForTPMessage = false;
     public int tpCommandTicks = 0;
     public int veinStatsHudTicks = 0;
 
@@ -128,13 +130,6 @@ public class BlockBreakFinder extends Module {
             .build()
     );
 
-
-//    private final Setting<Integer> delayBeforeNextSessionSetting = sgGeneral.add(new IntSetting.Builder()
-//            .name("delay-before-next-session")
-//            .description("Max time between two mining sessions in seconds")
-//            .defaultValue(3600)
-//            .build()
-//    );
 
     private final Setting<Integer> timeBeforeStopSetting = sgGeneral.add(new IntSetting.Builder()
             .name("time-before-stop")
@@ -305,6 +300,7 @@ public class BlockBreakFinder extends Module {
 
             if(veinsArrayList.size()>veinId && veinId>=0){
                 waitForTPMessage=true;
+                tpCommandTicks=0;
                 int[]coords = unpack(veinsArrayList.get(veinId).rows.getFirst().getCoords());
                 int x = coords[0], y = coords[1], z = coords[2];
                 String world = veinsArrayList.get(veinId).rows.getFirst().getWrld();
@@ -324,6 +320,7 @@ public class BlockBreakFinder extends Module {
         veinStatsHudTicks++;
         if(tpCommandTicks/20>=timeBeforeStopSetting.get()){
             waitForTPMessage=false;
+            tpCommandTicks=0;
         }
         if(veinStatsHudTicks/20>=timeBeforeHudRemoveHudSetting.get()){
             veinStatsHudTicks=0;
@@ -335,13 +332,13 @@ public class BlockBreakFinder extends Module {
             //veinsPlayerNow = getPlayerVeins(prevUsername);
         }
 
-        if(veinNow >- veinsArrayList.size()){
+        if(veinNow >= veinsArrayList.size() && !veinsArrayList.isEmpty()){
             veinNow=veinsArrayList.size()-1;
             nextVein();
         }
 
 
-        if(!veinsArrayList.isEmpty() && veinNow<veinsArrayList.size()){
+        if(!veinsArrayList.isEmpty() && veinNow<veinsArrayList.size() && veinNow>=0){
             if(!prevUsername.equals(veinsArrayList.get(veinNow).rows.getFirst().getUser())) {
                 prevUsername = veinsArrayList.get(veinNow).rows.getFirst().getUser();
                 veinsPlayerNow = getPlayerVeins(prevUsername);
@@ -364,8 +361,7 @@ public class BlockBreakFinder extends Module {
                 sendCoreProtectLookupCommand();
             }
             else{
-                if(pageNow<maxPages){
-                    pageNow++;
+                if(pageNow<=maxPages){
                     sendListCommand();
                 }
             }
@@ -377,6 +373,7 @@ public class BlockBreakFinder extends Module {
             findVeins();
             if(excludeType.get()==ExcludeTypes.Mod) excludeUsers();
             teleportToVein(0);
+            veinNow=0;
 
 
         }
@@ -478,7 +475,7 @@ public class BlockBreakFinder extends Module {
 
 
     private void stopProcess() {
-
+        test_count=0;
         count=0;
         isHandledRowsCountMessage=false;
         isStarted = false;
@@ -497,232 +494,105 @@ public class BlockBreakFinder extends Module {
         veinStatsHudTicks=0;
         prevUsername=null;
         blocks.clear();
+        waitForTPMessage = false;
 
     }
     int count = 0;
+    int test_count = 0;
     public Row newRow = new Row();
-    public boolean onGameMessage(Component message, boolean overlay) {
-        if (isStarted) {
 
-            if (!isHandledStartMessage && checkStartMessage(message.getString())) {
-                isHandledStartMessage = true;
-                isHandledEndMessage = false;
-                startTicks = 0;
-                return false;
+
+
+
+    @EventHandler
+    public void onBreakMessage(CoreProtectEvent.RowBlockBreak event) {
+        //if (checkRowMessage(message.getString()) && !isHandledRow) {
+        if(isStarted && !isHandledRow) {
+            if (!isHandledStartMessage || isHandledEndMessage) {
+                event.cancel();
+                return;
             }
 
-
-            if (checkRowMessage(message.getString()) && !isHandledRow) {
-                if (!isHandledStartMessage || isHandledEndMessage) {
-                    return false;
-                }
-
-                startTicks = 0;
-                count++;
-
-                //parseSiblings(message, "1");
-                String block_String = "";
-                String user_String = "";
-                if (message.getSiblings().size() == 2) {
-                    block_String = message.getSiblings().get(1).getSiblings().get(3).getString();
-                    user_String = message.getSiblings().get(1).getSiblings().get(1).getString();
-                } else {
-                    block_String = message.getSiblings().get(3).getSiblings().get(1).getString();
-                    user_String = message.getSiblings().get(2).getString();
-                }
-                HoverEvent hoverEvent = message.getSiblings().get(0).getStyle().getHoverEvent();
-                HoverEvent.ShowText hoverEventValue = (HoverEvent.ShowText) hoverEvent;
-                long timestamp = convertStringToDate(hoverEventValue.value().getString());
-
-                newRow.setBlock(block_String);
-                newRow.setUser(user_String);
-                newRow.setTimestamp(timestamp);
-
-                isHandledRow = true;
-                return false;
-            } else if (checkCoordsMessage(message.getString())) {
-                if (!isHandledStartMessage || isHandledEndMessage || !isHandledRow) {
-                    return false;
-                }
-
-                startTicks = 0;
-
-                String coords_String = message.getSiblings().get(2).getString();
-                if (coords_String.equals("^ ")) {
-                    coords_String = message.getSiblings().get(3).getString();
-                }
-
-                Coords coords = convertStringToCoords(coords_String);
-
-
-                newRow.setWorld(coords.getWorld());
-                int x = coords.getX();
-                int y = coords.getY();
-                int z = coords.getZ();
-                Long row_coords = pack(x, y, z);
-                newRow.setCoords(row_coords);
-                if (rows.containsKey(row_coords)) {
-                    maxRowsCount--;
-                }
-                rows.put(pack(x, y, z), newRow);
-                newRow = new Row();
-                isHandledRow = false;
-                return false;
-            } else if (!isHandledRowsCountMessage && checkRowsCountMessage(message.getString())) {
-                int rows_count = getRowsCount(message.getString());
-                int maxPages_temp = getPagesCountFromCount(rows_count);
-                maxPages = Math.min(maxPagesAmountSetting.get(), maxPages_temp);
-                mc.player.sendSystemMessage(Component.literal("Max rows amount: " + rows_count + ". Pages: " + maxPages));
-                maxRowsCount = Math.min(maxPages * maxRowsAmountSetting.get(), rows_count);
-                isHandledRowsCountMessage = true;
-                return false;
-            } else if (checkCoreProtectMessage(message.getString())) {
-                return false;
-            } else if (checkPagesCountMessage(message.getString())) {
-                isHandledEndMessage = true;
-                isHandledStartMessage = false;
-                return false;
-            }
-        }
-        else if(waitForTPMessage || checkTPMessage(message.getString())) {
-            waitForTPMessage=false;
-            return false;
-        }
-        return true;
-
-
-    }
-    public void parseSiblings(Component sibling, String level){
-        List<Component>siblings = sibling.getSiblings();
-        int count = 1;
-        for(Component component : siblings){
-            //System.out.println(level+"."+count+" "+component.getString());
-            if(!component.getSiblings().isEmpty()){
-                parseSiblings(component,level+"."+count);
-            }
+            startTicks = 0;
             count++;
+
+            newRow.setBlock(event.block);
+            newRow.setUser(event.username);
+            newRow.setTimestamp(event.time);
+
+            isHandledRow = true;
+            event.cancel();
+        }
+    }
+
+    @EventHandler
+    public void onCordsMessage(CoreProtectEvent.SystemCords event) {
+        if (!isStarted)return;
+        if (!isHandledStartMessage || isHandledEndMessage || !isHandledRow) {
+            return;
+        }
+        startTicks = 0;
+        newRow.setWorld(event.world);
+        int x = event.x;
+        int y = event.y;
+        int z = event.z;
+        Long row_coords = pack(x, y, z);
+        newRow.setCoords(row_coords);
+        if (rows.containsKey(row_coords)) {
+            maxRowsCount--;
+        }
+        rows.put(pack(x, y, z), newRow);
+        newRow = new Row();
+        isHandledRow = false;
+        event.cancel();
+    }
+
+    @EventHandler
+    public void onRowsCountMessage(CoreProtectEvent.SystemFoundRowsAmount event) {
+        if (!isStarted)return;
+        if (!isHandledRowsCountMessage) {
+            int rows_count = event.amount;
+            int maxPages_temp = getPagesCountFromCount(rows_count);
+            maxPages = Math.min(maxPagesAmountSetting.get(), maxPages_temp);
+            mc.player.sendSystemMessage(Component.literal("Max rows amount: " + rows_count + ". Pages: " + maxPages));
+            maxRowsCount = Math.min(maxPages * maxRowsAmountSetting.get(), rows_count);
+            isHandledRowsCountMessage = true;
+            event.cancel();
+        }
+        return;
+    }
+
+    @EventHandler
+    public void onSystemMessage(CoreProtectEvent.System event){
+        //"(^CoreProtect - Идёт поиск\\. Подожди\\.\\.\\.$)|(^----- Результаты Поиска CoreProtect \\|  -----$)|(^CoreProtect - Телепорт в)";
+
+        if(event.type==MessagesTypes.systemTeleport && waitForTPMessage){
+            waitForTPMessage=false;
+            event.cancel();
+            return;
         }
 
-    }
+        if (!isStarted)return;
 
-    public Coords convertStringToCoords(String string){
-        String regex = "\\(x(.+)\\/y(.+)\\/z(.+)\\/(.+)\\)$";
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(string);
-
-        if(!matcher.find())return null;
-        int x = Integer.parseInt(matcher.group(1));
-        int y = Integer.parseInt(matcher.group(2));
-        int z = Integer.parseInt(matcher.group(3));
-        String world = matcher.group(4);
-
-        return new Coords(x,y,z,world);
-    }
-
-
-    public long convertStringToDate(String string){
-
-        String regex = "^(\\d{4}(-\\d{2}){2} \\d{2}(:\\d{2}){2})";
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(string);
-        if(!matcher.find())return -1;
-
-        String date_string = matcher.group(1);
-
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        LocalDateTime localDateTime = LocalDateTime.parse(date_string, formatter);
-        ZoneId zoneid = timeZoneSetting.get()==TimeZones.Moscow ? ZoneId.of("Europe/Moscow") : ZoneId.of("UTC");
-
-
-        long seconds = localDateTime.atZone(zoneid)
-                .toInstant()
-                .toEpochMilli();
-        return seconds/1000;
-    }
-
-
-    public boolean checkStartMessage(String message){
-        String regex = "^CoreProtect - Lookup searching. Please wait...$";
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-
-        return matcher.find();
-    }
-
-    public boolean checkRowMessage(String message){
-        String regex = "^\\d+.+ago - .+ broke .+\\.$";
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-
-        return matcher.find();
-    }
-
-    public boolean checkCoordsMessage(String message){
-        String regex = "\\(x.+\\/y.+\\/z.+\\/.+\\)$";
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-
-        return matcher.find();
-    }
-
-    public boolean checkPagesCountMessage(String message){
-        String regex = "(Page \\d+\\/.+ \\(.+\\))";
-        //^----- CoreProtect \|  Lookup Results -----$
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-
-        return matcher.find();
-    }
-
-    public boolean checkCoreProtectMessage(String message){
-        String regex = "(^CoreProtect - Lookup searching\\. Please wait\\.\\.\\.$)|(^----- CoreProtect \\|  Lookup Results -----$)|(^CoreProtect - Teleported to)";
-        //^----- CoreProtect \|  Lookup Results -----$
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-
-        return matcher.find();
-    }
-
-    public boolean checkTPMessage(String message){
-        String regex = "(^CoreProtect - Teleported to)";
-
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-
-        return matcher.find();
-    }
-
-    public boolean checkRowsCountMessage(String message){
-        String regex = "^CoreProtect - (.+) rows found.$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-        return matcher.find();
-    }
-
-    public int getRowsCount(String message){
-        //System.out.println(message);
-        String regex = "^CoreProtect - (.+) rows found.$";
-        Pattern pattern = Pattern.compile(regex);
-        Matcher matcher = pattern.matcher(message);
-        matcher.find();
-        String rows_count_string = matcher.group(1);
-        if(rows_count_string.contains(",")) {
-            rows_count_string = rows_count_string.replaceAll(",", "");
+        if(event.type==MessagesTypes.systemWaitLookup && !isHandledStartMessage){
+            isHandledStartMessage = true;
+            isHandledEndMessage = false;
+            startTicks = 0;
         }
-        return Integer.parseInt(rows_count_string);
+        event.cancel();
+
     }
 
-    public int stringToPages(String message){
-        return Integer.parseInt(message);
+    @EventHandler
+    public void onPagesEvent(CoreProtectEvent.SystemPages event){
+        //if(event.type == MessagesTypes.systemPages){
+            pageNow++;
+            isHandledEndMessage = true;
+            isHandledStartMessage = false;
+            event.cancel();
+        //}
     }
+
 
     public int getPagesCountFromCount(int count){
         return ((count + maxRowsAmountSetting.get() - 1) / maxRowsAmountSetting.get());
@@ -794,6 +664,9 @@ public class BlockBreakFinder extends Module {
 
 
     public void sendListCommand(){
+//        if(pageNow == maxPages-1){
+//            pageNow++;
+//        }
         mc.player.connection.sendCommand("co l "+pageNow);
         mc.player.sendOverlayMessage(Component.literal("Получил страницу "+pageNow).withColor(TextColor.GREEN));
         commandCooldown=0;
