@@ -8,6 +8,8 @@ package com.dedokok.systems.modules;
 import com.dedokok.DedTools;
 import com.dedokok.events.CoreProtect.CoreProtectOnMessage;
 import com.dedokok.systems.modules.Feature.*;
+import com.dedokok.systems.modules.Feature.AutoReceiver;
+import com.dedokok.systems.modules.Feature.MessageAnnouncement;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
@@ -34,6 +36,7 @@ import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
+import net.fabricmc.fabric.api.client.message.v1.ClientSendMessageEvents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -76,10 +79,10 @@ public class Modules extends System<Modules> {
 
         //add(new AutoReceiver());
         AutoReceiver aR = new AutoReceiver();
-        ColourChatMessages CCM = new ColourChatMessages();
-        ClientReceiveMessageEvents.CHAT.register(aR::onChatMessage);
+        //ColourChatMessages CCM = new ColourChatMessages();
+       // ClientReceiveMessageEvents.CHAT.register(aR::onChatMessage);
         ClientReceiveMessageEvents.GAME.register(aR::onGameMessage);
-        ClientReceiveMessageEvents.MODIFY_GAME.register(CCM::onGameMessage);
+        //ClientReceiveMessageEvents.MODIFY_GAME.register(CCM::onGameMessage);
 
         AuxProtectClickTeleport APCT = new AuxProtectClickTeleport();
         ClientReceiveMessageEvents.MODIFY_GAME.register(APCT::onGameMessage);
@@ -94,7 +97,7 @@ public class Modules extends System<Modules> {
 
 
         add(aR);
-        add(CCM);
+        //add(CCM);
         add(new BlockBreakFinder());
         add(DP);
         add(APCT);
@@ -109,7 +112,16 @@ public class Modules extends System<Modules> {
         add(new Patrol());
         add(new PlayersNoteBook());
         add(new EntitiesInChunk());
-        add(new TestModule());
+
+
+        //AutoLogin AL = new AutoLogin();
+        //ClientReceiveMessageEvents.GAME.register(AL::onChatMessage);
+        //add(AL);
+
+
+        CoreProtectTweaks tM = new CoreProtectTweaks();
+        ClientSendMessageEvents.MODIFY_COMMAND.register(tM::onCommand);
+        add(tM);
     }
 
 

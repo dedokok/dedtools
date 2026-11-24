@@ -30,8 +30,8 @@ public final class TelegramNotifier {
 
 
         if (token == null || token.isBlank() || chatId == null || chatId.isBlank()) {
-            DedTools.LOGGER.warn("Telegram bot token/chat id is not set, " +
-                    "notification skipped. Use /pw telegram <token> <chatId> to configure it.");
+            //DedTools.LOGGER.warn("Telegram bot token/chat id is not set, " +
+            //        "notification skipped. Use /pw telegram <token> <chatId> to configure it.");
 
             return;
         }

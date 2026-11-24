@@ -1,5 +1,7 @@
 package com.dedokok.systems.modules.Feature;
 
+import com.dedokok.events.packets.PacketEvent;
+import com.dedokok.events.world.TickEvent;
 import com.dedokok.settings.BoolSetting;
 import com.dedokok.settings.ColorSetting;
 import com.dedokok.settings.Setting;
@@ -7,7 +9,12 @@ import com.dedokok.settings.SettingGroup;
 import com.dedokok.systems.modules.Categories;
 import com.dedokok.systems.modules.Module;
 import com.dedokok.utils.render.color.SettingColor;
+import meteordevelopment.orbit.EventHandler;
 import net.minecraft.network.chat.*;
+import net.minecraft.network.protocol.game.ClientboundBundlePacket;
+import net.minecraft.network.protocol.game.ClientboundPlayerChatPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
+import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 
 import java.util.List;
 import java.util.regex.Matcher;
@@ -37,36 +44,40 @@ public class AuxProtectClickTeleport extends Module {
 
     public Component onGameMessage(Component message, boolean overlay) {
         if(!isActive){return message;}
+
         String regex = checkAuxCoordsMessage(message.getString());
         if (regex!=null) {
-            Coords coords = getAuxCoords(message.getSiblings().getLast().getString(), regex);
-            String command = "/co teleport " + coords.world + " " + coords.x + " " + coords.y + " " + coords.z;
+            Coords coords = getAuxCoords(message.getString(), regex);
+            if (coords != null){
+                String command = "/co teleport " + coords.world + " " + coords.x + " " + coords.y + " " + coords.z;
 
             List<Component> siblings = message.getSiblings();
-            int lastIndex = siblings.size() - 1;
-            Component wrapper = siblings.get(lastIndex);
+            int lastIndex = siblings.size() - 2;
+            //Component wrapper = siblings.get(lastIndex);
             // "\n                 "
 
-            List<Component> wrapperSiblings = wrapper.getSiblings();
-            int coordsIndex = wrapperSiblings.size() - 1;
-            Component coordsComponent = wrapperSiblings.get(coordsIndex);
+            //List<Component> wrapperSiblings = wrapper.getSiblings();
+            //int coordsIndex = wrapperSiblings.size() - 1;
+            //Component coordsComponent = wrapperSiblings.get(coordsIndex);
+                Component coordsComponent = siblings.get(lastIndex);
 
             Component updatedCoords = coordsComponent.copy().withStyle(style -> style
                     .withClickEvent(new ClickEvent.RunCommand(command))
                     .withHoverEvent(new HoverEvent.ShowText(Component.literal(command)))
             );
 
-            MutableComponent rebuiltWrapper = MutableComponent.create(wrapper.getContents()).withStyle(wrapper.getStyle());
-            for (int i = 0; i < wrapperSiblings.size(); i++) {
-                rebuiltWrapper.append(i == coordsIndex ? updatedCoords : wrapperSiblings.get(i));
-            }
+//            MutableComponent rebuiltWrapper = MutableComponent.create(wrapper.getContents()).withStyle(wrapper.getStyle());
+//            for (int i = 0; i < wrapperSiblings.size(); i++) {
+//                rebuiltWrapper.append(i == coordsIndex ? updatedCoords : wrapperSiblings.get(i));
+//            }
 
             MutableComponent rebuiltMessage = MutableComponent.create(message.getContents()).withStyle(message.getStyle());
             for (int i = 0; i < siblings.size(); i++) {
-                rebuiltMessage.append(i == lastIndex ? rebuiltWrapper : siblings.get(i));
+                rebuiltMessage.append(i == lastIndex ? updatedCoords : siblings.get(i));
             }
 
             return rebuiltMessage;
+        }
         }
         return message;
     }
@@ -89,14 +100,14 @@ public class AuxProtectClickTeleport extends Module {
 
     public String checkAuxCoordsMessage(String message){
         boolean isFind = false;
-        String regex = "\\\\n                 \\(x(.+)\\/y(.+)\\/z(.+)\\/(.+)\\) ";
+        String regex = "\\n +(§7|)\\(x(.+)\\/y(.+)\\/z(.+)\\/(.+)\\).* ";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(message);
         if(matcher.find()){
            return regex;
         }
 
-        regex = "\\\\n                 \\(x(.+)\\/y(.+)\\/z(.+)\\/(.+)\\)";
+        regex = "\\n +(§7|)\\(x(.+)\\/y(.+)\\/z(.+)\\/(.+)\\)";
         pattern = Pattern.compile(regex);
         matcher = pattern.matcher(message);
         if(matcher.find()){
@@ -111,14 +122,21 @@ public class AuxProtectClickTeleport extends Module {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(message);
 
-        matcher.find();
-        int x = Integer.parseInt(matcher.group(1));
-        int y = Integer.parseInt(matcher.group(2));
-        int z = Integer.parseInt(matcher.group(3));
-        String world = matcher.group(4);
-        Coords coords = new Coords(x,y,z,world);
+        if(matcher.find()) {
+//            String group1 = matcher.group(2);
+//            String group2 = matcher.group(3);
+//            String group3 = matcher.group(4);
+//            String group4 = matcher.group(5);
 
-        return coords;
+            int x = Integer.parseInt(matcher.group(2));
+            int y = Integer.parseInt(matcher.group(3));
+            int z = Integer.parseInt(matcher.group(4));
+            String world = matcher.group(5);
+            Coords coords = new Coords(x, y, z, world);
+
+            return coords;
+        }
+        return null;
     }
     @Override
     public void onActivate() {
@@ -144,4 +162,27 @@ public class AuxProtectClickTeleport extends Module {
         public Coords(){}
     }
 
+
+//    long milliesLast = 0;
+//    int count = 0;
+//    @EventHandler
+//    public void onPacket(PacketEvent.Receive event) {
+//        if (mc.isSameThread()) return;
+//        mc.execute(() -> {
+////            if (mc.player != null) {
+////                mc.player.sendSystemMessage(Component.literal(event.packet.type().toString()));
+////            }
+//            if (event.packet instanceof ClientboundSetTimePacket) {
+//                if (mc.player != null) {
+//                    //mc.player.sendSystemMessage(Component.literal("пакет тика"));
+//                    System.out.println("пакет тика");
+//                }
+//            } else if (event.packet instanceof ClientboundSystemChatPacket chat) {
+//                if (mc != null && mc.player != null) {
+//                    //mc.player.sendSystemMessage(Component.literal("пакет чата "+ chat.content().getString()));
+//                    System.out.println("пакет чата "+ chat.content().getString());
+//                }
+//            }
+//        });
+//    }
 }

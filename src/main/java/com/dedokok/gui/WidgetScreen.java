@@ -300,8 +300,9 @@ public abstract class WidgetScreen extends Screen {
         mouseX *= s;
         mouseY *= s;
 
-        GuiHitTest.update(root, mouseX, mouseY);   // <-- новое
-
+        if(this instanceof VeinsListSettingScreen) {
+            GuiHitTest.update(root, mouseX, mouseY);   // <-- новое
+        }
         animProgress += (delta / 20 * 14) * (closing ? -1 : 1);
         animProgress = Mth.clamp(animProgress, 0, 1);
 

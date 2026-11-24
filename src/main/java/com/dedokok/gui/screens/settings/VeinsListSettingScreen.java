@@ -13,6 +13,7 @@ import com.dedokok.gui.widgets.input.WTextBox;
 import com.dedokok.gui.widgets.pressable.WPressable;
 import com.dedokok.settings.VeinsListSetting;
 import com.dedokok.systems.modules.Feature.BlockBreakFinder;
+import com.dedokok.utils.RegExUtils;
 import com.dedokok.utils.classes.Vein;
 import com.dedokok.utils.render.DisplayItemUtils;
 import com.mojang.blaze3d.platform.MacosUtil;
@@ -40,7 +41,11 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Vei
     }
 
 
-
+    @Override
+    public void removed() {
+        if (veinChoose != null) closeWidget();
+        super.removed();
+    }
     @Override
     protected WWidget getValueWidget(Vein value) {
         if(value.isRemoved)return null;
@@ -85,9 +90,10 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Vei
     @Override
     protected boolean includeValue(Vein value) {
 
-        Predicate<Vein> filter = ((VeinsListSetting) setting).filter;
-        if (filter == null) return BuiltInRegistries.BLOCK.getValue(Identifier.parse(value.rows.getFirst().getBlock())) != Blocks.AIR;
-        return filter.test(value);
+        //Predicate<Vein> filter = ((VeinsListSetting) setting).filter;
+        if (filterText.isEmpty()) return BuiltInRegistries.BLOCK.getValue(Identifier.parse(value.rows.getFirst().getBlock())) != Blocks.AIR;
+        String result = value.rows.getFirst().getUser() + " "+ value.rows.getFirst().getWrld() + " "+ value.rows.getFirst().getBlock();
+        return RegExUtils.isFind(result, filterText);
     }
 
 
@@ -99,7 +105,7 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Vei
         filter.setFocused(true);
 
         filter.action = () -> {
-            filterText = filter.get().trim();
+            filterText = filter.get();
             table.clear();
             initTable();
         };
@@ -173,19 +179,28 @@ public class VeinsListSettingScreen extends CollectionContainerSettingScreen<Vei
 
         collection = BlockBreakFinder.veinsArrayList;
         registry=BlockBreakFinder.veinsArrayList;
-        filterText="";
+
         ((VeinsListSetting) setting).filter = null;
         clear();
         initWidgets();
+    }
+
+    public void callReload(String filterText){
+        this.filterText=filterText;
+        reload();
     }
 
 
     @EventHandler
     private void onRender(GUIRenderEvent event){
 
-        if(mc != null && mc.gui.screen() != owner && targetVein!=null){
+        if (mc == null || mc.gui.screen() != this) return;
+
+        if(mc.gui.screen() != owner && targetVein!=null){
             openCloseWidget(-1);
         }
+
+
 
 //        if(isUpdatedScreen && veinChooseUpdateScreen){
 //            reload();

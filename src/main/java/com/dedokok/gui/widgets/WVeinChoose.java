@@ -50,14 +50,14 @@ public abstract class WVeinChoose extends WContainer implements WRoot {
         button_1.action = () -> {
             if(button_1.isOver(mc.mouseHandler.xpos(),mc.mouseHandler.ypos())) {
                 BlockBreakFinder.removePlayer(vein.rows.getFirst().getUser());
-                System.out.println("veinchoose screen: "+screen.getClass().getSimpleName());
+                //System.out.println("veinchoose screen: "+screen.getClass().getSimpleName());
                 List<String>newUsers = Modules.get().get(BlockBreakFinder.class).excludeEsersToLookupSetting.get();
                 newUsers.add(vein.rows.getFirst().getUser());
                 Modules.get().get(BlockBreakFinder.class).excludeEsersToLookupSetting.set(newUsers);
                 Modules.get().get(BlockBreakFinder.class).screen.reload();
                 screen.closeWidget();
-                screen.reload();
-                sendMessage("кнопка скрыть");
+                screen.callReload("");
+                //sendMessage("кнопка скрыть");
             }
             else{
                 button_1.pressed=false;
@@ -73,9 +73,11 @@ public abstract class WVeinChoose extends WContainer implements WRoot {
         button_2.action = () -> {
             if(button_2.isOver(mc.mouseHandler.xpos(),mc.mouseHandler.ypos())) {
                 BlockBreakFinder.deleteVein(vein);
+                Modules.get().get(BlockBreakFinder.class).screen.reload();
                 screen.closeWidget();
-                VeinsListSettingScreen.veinChooseUpdateScreen=true;
-                sendMessage("Кнопка удалить");
+                screen.callReload(screen.filterText);
+                //VeinsListSettingScreen.veinChooseUpdateScreen=true;
+                //sendMessage("Кнопка удалить");
             }
             else{
                 button_2.pressed=false;

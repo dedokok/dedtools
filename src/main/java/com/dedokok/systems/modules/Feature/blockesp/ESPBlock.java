@@ -70,6 +70,32 @@ public class ESPBlock {
     }
 
 
+    public void renderPlace(Render3DEvent event, Color color, double width) {
+        if(mc==null || mc.level==null)return;
+        double x1 = x+0.5;
+        double y1 = y;
+        double z1 = z+0.5;
+
+        //VoxelShape shape = state.getShape(mc.level, blockPos);
+
+//        if (!shape.isEmpty()) {
+//            x1 = x + shape.min(Direction.Axis.X);
+//            y1 = y + shape.min(Direction.Axis.Y);
+//            z1 = z + shape.min(Direction.Axis.Z);
+//            x2 = x + shape.max(Direction.Axis.X);
+//            y2 = y + shape.max(Direction.Axis.Y);
+//            z2 = z + shape.max(Direction.Axis.Z);
+//        }
+
+
+        ShapeMode shapeMode = ShapeMode.Lines;
+        neighbours=0;
+        event.renderer.quad(x1,y1,z1,x1+width,y1,z1,x1+width,y1,z1+width,x1,y1,z1+width,color);
+        //event.renderer.box(x1, y1, z1, x2, y2, z2, color, color, shapeMode, 0);
+
+    }
+
+
     public static long getKey(int x, int y, int z) {
         return ((long) y << 16) | ((long) (z & 15) << 8) | ((long) (x & 15));
     }

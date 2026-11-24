@@ -20,4 +20,9 @@ public class TickEvent {
             return INSTANCE;
         }
     }
+
+    public static class Server extends TickEvent{
+        private static final Server INSTANCE = new Server();
+        public static Server get() {return INSTANCE;}
+    }
 }

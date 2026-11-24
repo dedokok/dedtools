@@ -1,46 +1,33 @@
 package com.dedokok.systems.modules.Feature;
 
-import com.dedokok.DedTools;
-import com.dedokok.events.game.ChatMessageEvent;
-import com.dedokok.events.game.ReceiveMessageEvent;
-import com.dedokok.events.meteor.CharTypedEvent;
+import com.dedokok.events.packets.PacketEvent;
 import com.dedokok.events.world.TickEvent;
-import com.dedokok.gui.WidgetScreen;
-import com.dedokok.settings.*;
+import com.dedokok.gui.GuiTheme;
+import com.dedokok.gui.widgets.WWidget;
+import com.dedokok.gui.widgets.containers.WContainer;
+import com.dedokok.gui.widgets.containers.WTable;
+import com.dedokok.gui.widgets.containers.WVerticalList;
+import com.dedokok.gui.widgets.pressable.WButton;
+import com.dedokok.gui.widgets.pressable.WMinus;
 import com.dedokok.systems.modules.Categories;
-import com.dedokok.systems.modules.Category;
+import com.dedokok.systems.modules.Feature.AutoReveiver.AutoReceiveBlock;
+import com.dedokok.systems.modules.Feature.AutoReveiver.InstructionFactory;
 import com.dedokok.systems.modules.Module;
-import com.dedokok.utils.Utils;
-import com.dedokok.utils.misc.MeteorStarscript;
+import com.dedokok.utils.classes.SendMessagesTypes;
 import com.dedokok.utils.misc.text.MessageToSend;
-import com.dedokok.utils.player.ChatUtils;
-import com.mojang.authlib.GameProfile;
-
 
 
 import meteordevelopment.orbit.EventHandler;
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.*;
-import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
-import net.minecraft.client.gui.screens.options.*;
-import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
-import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
-import net.minecraft.client.gui.screens.worldselection.AbstractGameRulesScreen;
-import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
-import net.minecraft.client.gui.screens.worldselection.EditWorldScreen;
-import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
-import net.minecraft.network.chat.ChatType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.PlayerChatMessage;
-import net.minecraft.realms.RealmsScreen;
-import org.w3c.dom.Text;
+import net.minecraft.network.protocol.game.ClientboundSetSubtitleTextPacket;
+import net.minecraft.network.protocol.game.ClientboundSetTitleTextPacket;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class AutoReceiver extends Module {
 
@@ -49,129 +36,144 @@ public class AutoReceiver extends Module {
         runInMainMenu=true;
     }
 
-    private final SettingGroup sgGeneral = settings.getDefaultGroup();
-    private static ArrayList<MessageToSend>messagesToSend = new ArrayList<>();
-
-    private final Setting<String> messageTextSetting = sgGeneral.add(new StringSetting.Builder()
-            .name("message-get")
-            .description("On what text should receive")
-            .defaultValue("^\uF859 игрок (\\b[a-zA-Z0-9_]+\\b) впервые присоединился!$")
-//            .onChanged(newValue -> {
-//                DedTools.LOG.info("[DEBUG] messageTextSetting changed to: {}", newValue);
-//                if(mc!=null && mc.player!=null) {
-//                    mc.player.sendSystemMessage(Component.literal("Изменил паттерн на " + newValue));
-//                }w
-//                })
-            .build()
-    );
-
-    private final Setting<Boolean> isRandomReceiveTimeSetting = sgGeneral.add(new BoolSetting.Builder()
-            .name("is-random-receive-time")
-            .description("Receive on message after random time between after and before")
-            .defaultValue(true)
-            .build()
-    );
+    public static ArrayList<MessageToSend>messagesToSend = new ArrayList<>();
+    public static List<AutoReceiveBlock> messages = new ArrayList<>();
+    private final InstructionFactory factory = new InstructionFactory();
 
 
 
 
 
-    private final Setting<Integer> afterTimeSetting = sgGeneral.add(new IntSetting.Builder()
-            .name("after-time")
-            .description("After what time should receive. In seconds")
-            .defaultValue(0)
-            .min(0)
-            .max(1000)
-            .sliderMax(100)
-            .build()
-    );
-
-    private final Setting<Integer> beforeTimeSetting = sgGeneral.add(new IntSetting.Builder()
-            .name("before-time")
-            .description("Before what time should receive. In seconds")
-            .defaultValue(1)
-            .min(1)
-            .max(1000)
-            .sliderMax(100)
-            .visible(isRandomReceiveTimeSetting::get)
-            .build()
-    );
-
-    private final Setting<String> messageSendSetting = sgGeneral.add(new StringSetting.Builder()
-            .name("message-send")
-            .description("What should send in chat. {int from 0} to select regex group")
-            .defaultValue("Привет, {0}")
-            .build()
-    );
-
-
-
-    public void onChatMessage(Component message, PlayerChatMessage playerChatMessage, GameProfile sender, ChatType.Bound boundChatType, Instant timeStamp){
-        doMessage(message);
-    }
-
-    //@EventHandler
-    public void onGameMessage(Component message, boolean overlay){
-        //if(sender !=null && mc!=null && mc.player !=null && sender.name().equals(mc.player.getName().getString()))return;
-        doMessage(message);
-    }
-
-    private void doMessage(Component message){
-        String pattern_string = messageTextSetting.get();
-        String pattern_username = "^\\| . (\\b[a-zA-Z0-9_]+\\b):";
-        Pattern pattern_1 = Pattern.compile(pattern_username);
-        Matcher matcher_1 = pattern_1.matcher(message.getString());
-
-        if(matcher_1.find()){
-            String username = matcher_1.group(1);
-            if(mc!=null && mc.player!=null && username.equals(mc.player.getName().getString()))return;
-        }
-
-
-        Pattern pattern_2 = Pattern.compile(pattern_string);
-        Matcher matcher_2 = pattern_2.matcher(message.getString());
-        if(!matcher_2.find()) {
+    @EventHandler
+    public void onPacket(PacketEvent.Receive event) {
+        if(event.packet instanceof ClientboundSetTitleTextPacket title){
+            mc.execute(() -> {
+                for(AutoReceiveBlock instruction : messages){
+                    if(instruction.getTypeSetting.get() == AutoReceiveBlock.GetTypes.Title) {
+                        instruction.doMessage(title.text());
+                    }
+                }
+            });
             return;
         }
-        List<String> list = new ArrayList<>();
-        for(int i = 1; i<matcher_2.groupCount()+1;i++){
-            list.add(matcher_2.group(i));
+        if(event.packet instanceof ClientboundSetSubtitleTextPacket title){
+            mc.execute(() -> {
+                for(AutoReceiveBlock instruction : messages){
+                    if(instruction.getTypeSetting.get() == AutoReceiveBlock.GetTypes.SubTitle) {
+                        instruction.doMessage(title.text());
+                    }
+                }
+            });
+            return;
         }
-        String formattedString = messageSendSetting.get();
-        for (int i = 0; i < list.size(); i++) {
-            formattedString = formattedString.replace("{" + i + "}", list.get(i));
-        }
-
-        //if(isRandomReceiveTimeSetting.get()){
-            if(afterTimeSetting.get()>=beforeTimeSetting.get()){
-                mc.player.sendSystemMessage(Component.literal("After time cannot be more than before time").withStyle(ChatFormatting.RED));
-                return;
-            }
-            if(beforeTimeSetting.get()<=afterTimeSetting.get()){
-                mc.player.sendSystemMessage(Component.literal("Before time cannot be lower than after time").withStyle(ChatFormatting.RED));
-                return;
-            }
-            Long timeGet = System.currentTimeMillis();
-            int timeWait = 0;
-            if(isRandomReceiveTimeSetting.get()){
-                int timeAfter = afterTimeSetting.get()*1000;
-                int timeBefore = (beforeTimeSetting.get()+1)*1000;
-                timeWait = new java.util.Random().nextInt(timeAfter, timeBefore);
-            }
-            else{
-                timeWait = afterTimeSetting.get()*1000;
-            }
-
-
-            MessageToSend newMessage = new MessageToSend(timeGet,formattedString,timeWait);
-            messagesToSend.add(newMessage);
-        //}
-//        else {
-//            MessageToSend newMessage = new MessageToSend(timeGet,formattedString,timeWait);
-//            messagesToSend.add(newMessage);
-//            sendMessage(formattedString);
-//        }
     }
+
+
+    public void onGameMessage(Component message, boolean overlay){
+        for(AutoReceiveBlock instruction : messages){
+            if(instruction.getTypeSetting.get() == AutoReceiveBlock.GetTypes.Chat) {
+                instruction.doMessage(message);
+            }
+        }
+    }
+
+    public CompoundTag toTag() {
+        CompoundTag tag = super.toTag();
+
+        ListTag list = new ListTag();
+        for (AutoReceiveBlock instruction : messages) {
+            CompoundTag mTag = new CompoundTag();
+            mTag.putString("type", instruction.getTypeName());
+            mTag.put("instruction", instruction.toTag());
+
+
+            list.add(mTag);
+        }
+        tag.put("instructions", list);
+        return tag;
+    }
+
+    public static List<AutoReceiveBlock> readInstructionsFromTag(CompoundTag tag, InstructionFactory factory) {
+        List<AutoReceiveBlock> instructions = new ArrayList<>();
+        ListTag list = tag.getListOrEmpty("instructions");
+
+        for (Tag tagII : list) {
+            CompoundTag tagI = (CompoundTag) tagII;
+            String type = tagI.getStringOr("type", "");
+            AutoReceiveBlock instruction = factory.createInstruction(type);
+
+            if (instruction != null) {
+                CompoundTag instructionTag = (CompoundTag) tagI.get("instruction");
+                if (instructionTag != null) instruction.fromTag(instructionTag);
+                instructions.add(instruction);
+            }
+        }
+
+        return instructions;
+    }
+    public Module fromTag(CompoundTag tag) {
+        super.fromTag(tag);
+
+        messages.clear();
+        messages = readInstructionsFromTag(tag, factory);
+
+        return this;
+    }
+
+    @Override
+    public WWidget getWidget(GuiTheme theme) {
+        WVerticalList list = theme.verticalList();
+        fillWidget(theme, list);
+        return list;
+    }
+
+    private void fillWidget(GuiTheme theme, WVerticalList list) {
+        list.clear();
+
+        for (AutoReceiveBlock message : messages) {
+            message.screen = screen;
+
+            list.add(theme.settings(message.settings)).expandX();
+
+            WContainer container = list.add(theme.horizontalList()).expandX().widget();
+
+
+            WButton copy = container.add(theme.button("copy")).right().widget();
+            copy.tooltip = "Duplicate message.";
+            copy.action = () -> {
+                messages.add(messages.indexOf(message), message.copy());
+                fillWidget(theme, list);
+            };
+
+            WMinus remove = container.add(theme.minus()).right().widget();
+            remove.tooltip = "Remove message.";
+            remove.action = () -> {
+                messages.remove(message);
+                fillWidget(theme, list);
+            };
+        }
+
+        if (!messages.isEmpty()) list.add(theme.horizontalSeparator()).expandX();
+
+        WTable controls = list.add(theme.table()).expandX().widget();
+
+        WButton createCommand = controls.add(theme.button("New autoreceive")).expandX().widget();
+        createCommand.action = () -> {
+            AutoReceiveBlock instruction = new AutoReceiveBlock();
+            messages.add(instruction);
+            fillWidget(theme, list);
+        };
+
+        WButton removeAll = controls.add(theme.button("Remove all messages")).expandX().widget();
+        removeAll.action = () -> {
+            messages.clear();
+            fillWidget(theme, list);
+        };
+
+        //MeteoristConfigManager.configManager(theme, list, this);
+    }
+
+
 
 
     @EventHandler
@@ -185,7 +187,7 @@ public class AutoReceiver extends Module {
             MessageToSend messageToSend = iterator.next();
 
             if (System.currentTimeMillis() - messageToSend.getTimeGet() > messageToSend.getTimeToWait()) {
-                sendMessage(messageToSend.getText());
+                sendMessage(messageToSend.getText(),messageToSend.getType());
                 iterator.remove();
             }
         }
@@ -202,10 +204,29 @@ public class AutoReceiver extends Module {
         messagesToSend.clear();
     }
 
-    private void sendMessage(String message){
+    private void sendMessage(String message, SendMessagesTypes type){
+        if(mc==null || mc.player==null)return;
+        //{
+        switch(type) {
+            case Command: {
+                if (mc.getConnection() == null) return;
+                mc.getConnection().sendCommand(message);
+                break;
+            }
+            case Chat: {
+                if (mc.getConnection() == null) return;
+                mc.getConnection().sendChat(message);
+                break;
+            }
+            case System:{
+                mc.player.sendSystemMessage(Component.literal(message));
+                break;
+            }
+        }
+        //}
         mc.gui.hud.setTitle(Component.literal("Sent message").withStyle(ChatFormatting.GREEN));
         mc.gui.hud.setTimes(10, 70, 20);
-        mc.player.connection.sendChat(message);
+        //mc.player.connection.sendChat(message);
     }
 
 

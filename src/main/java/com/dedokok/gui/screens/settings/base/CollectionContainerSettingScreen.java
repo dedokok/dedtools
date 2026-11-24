@@ -40,7 +40,7 @@ public abstract class CollectionContainerSettingScreen<T> extends WindowScreen {
     protected Iterable<T> registry;
 
     protected WTable table;
-    protected String filterText = "";
+    public String filterText = "";
 
     public CollectionContainerSettingScreen(GuiTheme theme, String title, Setting<?> setting, ArrayList<T> collection, Iterable<T> registry) {
         super(theme, title);
@@ -63,6 +63,7 @@ public abstract class CollectionContainerSettingScreen<T> extends WindowScreen {
         // Filter
         WTextBox filter = add(theme.textBox("")).minWidth(400).expandX().widget();
         filter.setFocused(true);
+
         filter.action = () -> {
 
             filterText = filter.get().trim();

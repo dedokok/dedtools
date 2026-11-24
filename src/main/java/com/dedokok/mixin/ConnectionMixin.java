@@ -5,6 +5,7 @@
 
 package com.dedokok.mixin;
 
+import com.dedokok.events.world.TickEvent;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
@@ -27,6 +28,7 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBundlePacket;
+import net.minecraft.network.protocol.game.ClientboundSetTimePacket;
 import net.minecraft.server.network.EventLoopGroupHolder;
 import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
@@ -48,7 +50,11 @@ public abstract class ConnectionMixin {
                 if (DedTools.EVENT_BUS.post(new PacketEvent.Receive(it.next(), (Connection) (Object) this)).isCancelled())
                     it.remove();
             }
-        } else if (DedTools.EVENT_BUS.post(new PacketEvent.Receive(packet, (Connection) (Object) this)).isCancelled())
+        }
+        else if(packet instanceof ClientboundSetTimePacket pack){
+            DedTools.EVENT_BUS.post(TickEvent.Server.get());
+        }
+        else if (DedTools.EVENT_BUS.post(new PacketEvent.Receive(packet, (Connection) (Object) this)).isCancelled())
             ci.cancel();
     }
 

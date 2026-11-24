@@ -30,6 +30,8 @@ import static org.lwjgl.glfw.GLFW.*;
 public abstract class WTextBox extends WWidget {
     private static final Renderer DEFAULT_RENDERER = (renderer, x, y, text, color) -> renderer.text(text, x, y, color, false);
 
+    public boolean enabled = true;
+
     public Runnable action;
     public Runnable actionOnUnfocused;
 
@@ -111,7 +113,7 @@ public abstract class WTextBox extends WWidget {
     public boolean onMouseClicked(MouseButtonEvent click, boolean doubled) {
         if (mouseOver) {
             if (click.button() == GLFW_MOUSE_BUTTON_RIGHT) {
-                if (!text.isEmpty()) {
+                if (!text.isEmpty() && enabled) {
                     text = "";
                     cursor = 0;
                     selectionStart = 0;
@@ -238,9 +240,14 @@ public abstract class WTextBox extends WWidget {
 
     @Override
     public boolean onKeyPressed(KeyEvent input) {
+        if(!enabled && input.key() != GLFW_KEY_RIGHT && input.key() != GLFW_KEY_LEFT){
+            if(input.key() != GLFW_KEY_C)return false;
+        }
         if (!focused) return false;
 
         boolean control = MacosUtil.IS_MACOS ? input.modifiers() == GLFW_MOD_SUPER : input.modifiers() == GLFW_MOD_CONTROL;
+
+        if(!enabled && !control && input.key() == GLFW_KEY_C)return false;
 
         if (control && input.key() == GLFW_KEY_C) {
             if (cursor != selectionStart || cursor != selectionEnd) {
@@ -297,6 +304,7 @@ public abstract class WTextBox extends WWidget {
 
     @Override
     public boolean onKeyRepeated(KeyEvent input) {
+        if(!enabled && input.key() != GLFW_KEY_RIGHT && input.key() != GLFW_KEY_LEFT) return false;
         if (!focused) return false;
 
         boolean control = MacosUtil.IS_MACOS ? input.modifiers() == GLFW_MOD_SUPER : input.modifiers() == GLFW_MOD_CONTROL;
@@ -540,6 +548,7 @@ public abstract class WTextBox extends WWidget {
 
     @Override
     public boolean onCharTyped(CharacterEvent input) {
+        if(!enabled) return false;
         if (!focused) return false;
 
         if (filter.filter(text, input.codepoint())) {

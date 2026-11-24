@@ -52,6 +52,7 @@ public class GuiRenderer {
     public static GuiTexture RESET;
     public static GuiTexture FAVORITE_NO, FAVORITE_YES;
     public static GuiTexture COPY, PASTE;
+    public static GuiTexture ARROW_UP, ARROW_DOWN;
 
     public GuiTheme theme;
 
@@ -87,6 +88,9 @@ public class GuiRenderer {
 
         COPY = addTexture(DedTools.identifier("textures/icons/gui/copy.png"));
         PASTE = addTexture(DedTools.identifier("textures/icons/gui/paste.png"));
+
+        ARROW_UP = addTexture(DedTools.identifier("textures/icons/gui/arrow_up.png"));
+        ARROW_DOWN = addTexture(DedTools.identifier("textures/icons/gui/arrow_down.png"));
 
         TEXTURE = TEXTURE_PACKER.pack();
     }

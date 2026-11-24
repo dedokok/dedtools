@@ -41,6 +41,8 @@ dependencies {
 	implementation include("dev.firstdark.discordrpc:discord-rpc:1.0.6")
 	implementation include('org.reflections:reflections:0.10.2')
 	implementation include('org.javassist:javassist:3.29.2-GA')
+	implementation include('org.xerial:sqlite-jdbc:3.53.4.0')
+
 
 }
 

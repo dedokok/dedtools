@@ -85,6 +85,8 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
         factories.put(KeyboardHud.CustomKeyListSetting.class, (table, setting) -> customKeyListW(table, (KeyboardHud.CustomKeyListSetting) setting));
         factories.put(FileSetting.class, (table, setting) -> fileW(table, (FileSetting) setting));
         factories.put(ButtonSetting.class,(table,setting)->buttonW(table, (ButtonSetting) setting));
+       // factories.put(CPHistorySetting.class,(table,setting)->cpHistoryW(table, (CPHistorySetting) setting));
+
     }
 
     @Override
@@ -234,6 +236,22 @@ public class DefaultSettingsWidgetFactory extends SettingsWidgetFactory {
             setting.onChanged();
         };
     }
+
+//    private void cpHistoryW(WTable table,CPHistorySetting setting){
+//        WHorizontalList list = table.add(theme.horizontalList()).expandX().widget();
+//
+//        WButton button = list.add(theme.button(GuiRenderer.FAVORITE_YES)).expandX().widget();
+//        button.tooltip = setting.description;
+//
+//        button.width=50;
+//        button.height=setting.height;
+//        button.instantTooltips=true;
+//
+//
+//        button.action = () -> {
+//            setting.onChanged();
+//        };
+//    }
 
     private void stringListW(WTable table, StringListSetting setting) {
         WTable wtable = table.add(theme.table()).expandX().widget();

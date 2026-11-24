@@ -1,11 +1,59 @@
 package com.dedokok.events.CoreProtect;
 
 
+import com.dedokok.DedTools;
 import com.dedokok.events.Cancellable;
 import com.dedokok.utils.classes.CoreProtect.MessagesTypes;
 import net.minecraft.network.chat.Component;
 
 public class CoreProtectEvent {
+    public static class Message extends Cancellable {
+        protected static final Message INSTANCE = new Message();
+        public MessagesTypes type;
+
+        public Component message;
+        public String username;
+        public Long time;
+        public String block;
+        public String item;
+        public String entity;
+        public String newUsername;
+        public String text;
+        public String clicked;
+        public Integer amount;
+        public Integer x;
+        public Integer y;
+        public Integer z;
+        public String world;
+        public Integer pageNow;
+        public Integer pageMax;
+
+        public static Message get(MessagesTypes type, Component message, String username, Long time, String block, String item,
+                                  String entity, String newUsername, String text, String clicked, Integer amount,
+                                  Integer x, Integer y, Integer z, Integer pageNow, Integer pageMax, String world) {
+            INSTANCE.setCancelled(false);
+            INSTANCE.type = type;
+            INSTANCE.message = message;
+            INSTANCE.username = username;
+            INSTANCE.time = time;
+            INSTANCE.block = block;
+            INSTANCE.item = item;
+            INSTANCE.entity = entity;
+            INSTANCE.newUsername = newUsername;
+            INSTANCE.text = text;
+            INSTANCE.clicked = clicked;
+            INSTANCE.amount = amount;
+            INSTANCE.x = x;
+            INSTANCE.y = y;
+            INSTANCE.z = z;
+            INSTANCE.world = world;
+            INSTANCE.pageNow = pageNow;
+            INSTANCE.pageMax = pageMax;
+            INSTANCE.block = block;
+            return INSTANCE;
+        }
+    }
+
     public static class Row extends Cancellable {
         protected static final Row INSTANCE = new Row();
         public MessagesTypes type;
@@ -34,6 +82,8 @@ public class CoreProtectEvent {
             INSTANCE.text = text;
             INSTANCE.clicked = clicked;
             INSTANCE.amount = amount;
+
+            DedTools.EVENT_BUS.post(Message.get(type,message,username,time,block,item,entity,newUsername,text,clicked,amount,null,null,null,null,null,null));
 
             return INSTANCE;
         }
@@ -254,68 +304,68 @@ public class CoreProtectEvent {
     }
 
 
-    //inventory
-    public static class RowInventory extends Cancellable {
-        protected static final RowInventory INSTANCE = new RowInventory();
-        public MessagesTypes type;
-        public Component message;
-        public String username;
-        public long time;
-        public String item;
-        public int amount;
-        public static RowInventory get(MessagesTypes type, Component message,String username, long time, String item, int amount) {            INSTANCE.setCancelled(false);
-            INSTANCE.setCancelled(false);
-            INSTANCE.type = type;
-            INSTANCE.message = message;
-            INSTANCE.username = username;
-            INSTANCE.time = time;
-            INSTANCE.item = item;
-            INSTANCE.amount = amount;
-            return INSTANCE;
-        }
-    }
-
-    //inventory
-    public static class RowInventoryAdd extends Cancellable {
-        protected static final RowInventoryAdd INSTANCE = new RowInventoryAdd();
-        public MessagesTypes type;
-        public Component message;
-        public String username;
-        public long time;
-        public String item;
-        public int amount;
-        public static RowInventoryAdd get(MessagesTypes type, Component message,String username, long time, String item, int amount) {            INSTANCE.setCancelled(false);
-            INSTANCE.setCancelled(false);
-            INSTANCE.type = type;
-            INSTANCE.message = message;
-            INSTANCE.username = username;
-            INSTANCE.time = time;
-            INSTANCE.item = item;
-            INSTANCE.amount = amount;
-            return INSTANCE;
-        }
-    }
-
-    //inventory
-    public static class RowInventoryRemove extends Cancellable {
-        protected static final RowInventoryRemove INSTANCE = new RowInventoryRemove();
-        public MessagesTypes type;
-        public Component message;
-        public String username;
-        public long time;
-        public String item;
-        public int amount;
-        public static RowInventoryRemove get(MessagesTypes type, Component message,String username, long time, String item,  int amount) {            INSTANCE.setCancelled(false);
-            INSTANCE.setCancelled(false);
-            INSTANCE.type = type;
-            INSTANCE.message = message;
-            INSTANCE.username = username;
-            INSTANCE.time = time;
-            INSTANCE.item = item;
-            INSTANCE.amount = amount;
-            return INSTANCE;
-        }
-    }
+//    //inventory
+//    public static class RowInventory extends Cancellable {
+//        protected static final RowInventory INSTANCE = new RowInventory();
+//        public MessagesTypes type;
+//        public Component message;
+//        public String username;
+//        public long time;
+//        public String item;
+//        public int amount;
+//        public static RowInventory get(MessagesTypes type, Component message,String username, long time, String item, int amount) {            INSTANCE.setCancelled(false);
+//            INSTANCE.setCancelled(false);
+//            INSTANCE.type = type;
+//            INSTANCE.message = message;
+//            INSTANCE.username = username;
+//            INSTANCE.time = time;
+//            INSTANCE.item = item;
+//            INSTANCE.amount = amount;
+//            return INSTANCE;
+//        }
+//    }
+//
+//    //inventory
+//    public static class RowInventoryAdd extends Cancellable {
+//        protected static final RowInventoryAdd INSTANCE = new RowInventoryAdd();
+//        public MessagesTypes type;
+//        public Component message;
+//        public String username;
+//        public long time;
+//        public String item;
+//        public int amount;
+//        public static RowInventoryAdd get(MessagesTypes type, Component message,String username, long time, String item, int amount) {            INSTANCE.setCancelled(false);
+//            INSTANCE.setCancelled(false);
+//            INSTANCE.type = type;
+//            INSTANCE.message = message;
+//            INSTANCE.username = username;
+//            INSTANCE.time = time;
+//            INSTANCE.item = item;
+//            INSTANCE.amount = amount;
+//            return INSTANCE;
+//        }
+//    }
+//
+//    //inventory
+//    public static class RowInventoryRemove extends Cancellable {
+//        protected static final RowInventoryRemove INSTANCE = new RowInventoryRemove();
+//        public MessagesTypes type;
+//        public Component message;
+//        public String username;
+//        public long time;
+//        public String item;
+//        public int amount;
+//        public static RowInventoryRemove get(MessagesTypes type, Component message,String username, long time, String item,  int amount) {            INSTANCE.setCancelled(false);
+//            INSTANCE.setCancelled(false);
+//            INSTANCE.type = type;
+//            INSTANCE.message = message;
+//            INSTANCE.username = username;
+//            INSTANCE.time = time;
+//            INSTANCE.item = item;
+//            INSTANCE.amount = amount;
+//            return INSTANCE;
+//        }
+//    }
 
 
     //kill
@@ -476,7 +526,7 @@ public class CoreProtectEvent {
         public Integer pageMax;
         public String block;
 
-        public static System get(MessagesTypes type, Component message, Integer amount, Integer x, Integer y, Integer z, Integer pageNow, Integer pageMax, String world, String block) {            INSTANCE.setCancelled(false);
+        public static System get(MessagesTypes type, Component message, Integer amount, Integer x, Integer y, Integer z, Integer pageNow, Integer pageMax, String world, String block) {
             INSTANCE.setCancelled(false);
             INSTANCE.type = type;
             INSTANCE.message = message;
@@ -488,6 +538,7 @@ public class CoreProtectEvent {
             INSTANCE.pageNow = pageNow;
             INSTANCE.pageMax = pageMax;
             INSTANCE.block = block;
+            DedTools.EVENT_BUS.post(Message.get(type,message,null,null,block,null,null,null,null,null,amount,x,y,z,pageNow,pageMax,world));
 
 
             return INSTANCE;
@@ -729,6 +780,27 @@ public class CoreProtectEvent {
         }
     }
 
+
+
+
+    //systemInspector
+    public static class SystemInspector extends Cancellable {
+        protected static final SystemInspector INSTANCE = new SystemInspector();
+        public MessagesTypes type;
+        public Component message;
+        public int x;
+        public int y;
+        public int z;
+        public static SystemInspector get(MessagesTypes type, Component message, int x, int y, int z) {            INSTANCE.setCancelled(false);
+            INSTANCE.setCancelled(false);
+            INSTANCE.type = type;
+            INSTANCE.message = message;
+            INSTANCE.x = x;
+            INSTANCE.y = y;
+            INSTANCE.z = z;
+            return INSTANCE;
+        }
+    }
     //systemInspectorCords
     public static class SystemInspectorCords extends Cancellable {
         protected static final SystemInspectorCords INSTANCE = new SystemInspectorCords();
@@ -738,6 +810,40 @@ public class CoreProtectEvent {
         public int y;
         public int z;
         public static SystemInspectorCords get(MessagesTypes type, Component message, int x, int y, int z) {            INSTANCE.setCancelled(false);
+            INSTANCE.setCancelled(false);
+            INSTANCE.type = type;
+            INSTANCE.message = message;
+            INSTANCE.x = x;
+            INSTANCE.y = y;
+            INSTANCE.z = z;
+            return INSTANCE;
+        }
+    }
+    public static class SystemInspectorContainer extends Cancellable {
+        protected static final SystemInspectorContainer INSTANCE = new SystemInspectorContainer();
+        public MessagesTypes type;
+        public Component message;
+        public int x;
+        public int y;
+        public int z;
+        public static SystemInspectorContainer get(MessagesTypes type, Component message, int x, int y, int z) {            INSTANCE.setCancelled(false);
+            INSTANCE.setCancelled(false);
+            INSTANCE.type = type;
+            INSTANCE.message = message;
+            INSTANCE.x = x;
+            INSTANCE.y = y;
+            INSTANCE.z = z;
+            return INSTANCE;
+        }
+    }//systemInspectorCords
+    public static class SystemInspectorInteraction extends Cancellable {
+        protected static final SystemInspectorInteraction INSTANCE = new SystemInspectorInteraction();
+        public MessagesTypes type;
+        public Component message;
+        public int x;
+        public int y;
+        public int z;
+        public static SystemInspectorInteraction get(MessagesTypes type, Component message, int x, int y, int z) {            INSTANCE.setCancelled(false);
             INSTANCE.setCancelled(false);
             INSTANCE.type = type;
             INSTANCE.message = message;

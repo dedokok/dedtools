@@ -8,6 +8,7 @@ import com.dedokok.systems.modules.Categories;
 import com.dedokok.systems.modules.Feature.blockesp.ESPBlock;
 import com.dedokok.systems.modules.Module;
 import com.dedokok.systems.modules.Modules;
+import com.dedokok.utils.RegExUtils;
 import com.dedokok.utils.classes.Coords;
 import com.dedokok.utils.classes.CoreProtect.MessagesTypes;
 import com.dedokok.utils.classes.Row;
@@ -179,7 +180,7 @@ public class BlockBreakFinder extends Module {
             .defaultValue(ExcludeTypes.Mod)
             .onChanged(mode -> {
                 disable();
-                stopProcess();
+                clearAll();
             })
             .build()
     );
@@ -212,9 +213,7 @@ public class BlockBreakFinder extends Module {
             .width(50)
             .onChanged(_ -> {
                 this.enable();
-                rows.clear();
-                newRow=new Row();
-                startTicks=0;
+                clearAll();
                 updateOres();
                 isStarted = true;
             })
@@ -337,13 +336,11 @@ public class BlockBreakFinder extends Module {
             nextVein();
         }
 
-
         if(!veinsArrayList.isEmpty() && veinNow<veinsArrayList.size() && veinNow>=0){
-            if(!prevUsername.equals(veinsArrayList.get(veinNow).rows.getFirst().getUser())) {
+            if((!prevUsername.equals(veinsArrayList.get(veinNow).rows.getFirst().getUser()))) {
                 prevUsername = veinsArrayList.get(veinNow).rows.getFirst().getUser();
                 veinsPlayerNow = getPlayerVeins(prevUsername);
-                blocks.clear();
-                getPlayerBlocks(prevUsername);
+                getNewESPBlocks(prevUsername);
             }
         }
 
@@ -353,7 +350,8 @@ public class BlockBreakFinder extends Module {
         if(!isStarted){return;}
         startTicks++;
         if(startTicks/20>= timeBeforeStopSetting.get()){
-            stopProcess();
+            clearAll();
+            return;
         }
         commandCooldown++;
         if(commandCooldown>= timeBetweenCommandsSetting.get()){
@@ -361,7 +359,7 @@ public class BlockBreakFinder extends Module {
                 sendCoreProtectLookupCommand();
             }
             else{
-                if(pageNow<=maxPages){
+                if(pageNow<=maxPages && isHandledEndMessage){
                     sendListCommand();
                 }
             }
@@ -369,8 +367,9 @@ public class BlockBreakFinder extends Module {
         if(((isHandledEndMessage && rows.size() >= maxRowsCount) || rows.size() >= maxRowsCount) && isHandledRowsCountMessage) {
 
             mc.player.sendSystemMessage(Component.literal("Got " + rows.size() + " rows"));
-            stopProcess();
             findVeins();
+            stopProcess();
+
             if(excludeType.get()==ExcludeTypes.Mod) excludeUsers();
             teleportToVein(0);
             veinNow=0;
@@ -379,16 +378,66 @@ public class BlockBreakFinder extends Module {
         }
     }
 
+    public static void getNewESPBlocks(String username){
+        blocks.clear();
+        getPlayerBlocks(username);
+    }
+
+
     public void excludeUsers(){
         List<String> excludeUsers = excludeEsersToLookupSetting.get();
         if(excludeUsers.isEmpty())return;
 
+        HashSet<String>usersToRemove = new  HashSet<>();
+        HashSet<String>checkedUsers = new HashSet<>();
+
         ArrayList<Vein>newVeins = new ArrayList<>();
+
         for(Vein vein : veinsArrayList){
-            if(excludeUsers.contains(vein.rows.getFirst().getUser()))continue;
-            newVeins.add(vein);
+            String username = vein.rows.getFirst().getUser();
+            //if(checkedUsers.contains(username)){continue;}
+
+            boolean isExcluded = false;
+
+            if(usersToRemove.contains(username)){continue;}
+
+            if(checkedUsers.contains(username)){
+                newVeins.add(vein);
+                continue;
+            }
+            else {
+                for (String pattern : excludeUsers) {
+                    if (RegExUtils.isFind(username, pattern) && !usersToLookupSetting.get().contains(username)) {
+                        usersToRemove.add(username);
+                        isExcluded = true;
+                        break;
+                    }
+                }
+            }
+
+            checkedUsers.add(username);
+
+            if(isExcluded){
+                continue;
+            }
+            else{
+                newVeins.add(vein);
+            }
         }
-        veinsArrayList=newVeins;
+        veinsArrayList = newVeins;
+        updateVeinsIds();
+    }
+
+    public ArrayList<Vein> removeUsers(HashSet<String>usersToRemove, ArrayList<Vein>oldVeins){
+        ArrayList<Vein>newVeins = new ArrayList<>();
+
+        for(Vein vein : oldVeins){
+            if(!usersToRemove.contains(vein.rows.getFirst().getUser())){
+                newVeins.add(vein);
+            }
+        }
+
+        return newVeins;
     }
 
 
@@ -455,7 +504,7 @@ public class BlockBreakFinder extends Module {
 
     @Override
     public void onDeactivate(){
-        stopProcess();
+        clearAll();
 
 
     }
@@ -476,6 +525,8 @@ public class BlockBreakFinder extends Module {
 
     private void stopProcess() {
         test_count=0;
+        countBreakM=0;
+        countCordM=0;
         count=0;
         isHandledRowsCountMessage=false;
         isStarted = false;
@@ -488,14 +539,23 @@ public class BlockBreakFinder extends Module {
         isHandledRow=false;
         pageNow=1;
         teleported_vein=null;
-        veinsArrayList.clear();
         veinsHashSet.clear();
         tpCommandTicks=0;
         veinStatsHudTicks=0;
         prevUsername=null;
         blocks.clear();
         waitForTPMessage = false;
+        newRow=new Row();
+    }
 
+    public void clearAll(){
+        stopProcess();;
+        clearLists();
+    }
+
+    public void clearLists(){
+        veinsArrayList.clear();
+        rows.clear();
     }
     int count = 0;
     int test_count = 0;
@@ -504,17 +564,22 @@ public class BlockBreakFinder extends Module {
 
 
 
+    int countBreakM = 0;
     @EventHandler
     public void onBreakMessage(CoreProtectEvent.RowBlockBreak event) {
+        //System.out.println("bM = "+countBreakM+". cM = "+countCordM + ". count = "+count +". rows = "+rows.size()+". max = "+maxRowsCount);
+        //countBreakM++;
         //if (checkRowMessage(message.getString()) && !isHandledRow) {
         if(isStarted && !isHandledRow) {
+            //System.out.println("CP: "+event.username+" сломал блок " +event.block +" в "+event.time);
             if (!isHandledStartMessage || isHandledEndMessage) {
                 event.cancel();
                 return;
             }
+           // System.out.println("прошёл в break");
 
             startTicks = 0;
-            count++;
+            //count++;
 
             newRow.setBlock(event.block);
             newRow.setUser(event.username);
@@ -523,11 +588,19 @@ public class BlockBreakFinder extends Module {
             isHandledRow = true;
             event.cancel();
         }
+//        else{
+//            int a = 0;
+//            a++;
+//        }
     }
 
+    int countCordM = 0;
     @EventHandler
     public void onCordsMessage(CoreProtectEvent.SystemCords event) {
-        if (!isStarted)return;
+
+        if (!isStarted){
+            return;
+        }
         if (!isHandledStartMessage || isHandledEndMessage || !isHandledRow) {
             return;
         }
@@ -538,13 +611,16 @@ public class BlockBreakFinder extends Module {
         int z = event.z;
         Long row_coords = pack(x, y, z);
         newRow.setCoords(row_coords);
+        countCordM++;
         if (rows.containsKey(row_coords)) {
+            //System.out.println("--");
             maxRowsCount--;
         }
         rows.put(pack(x, y, z), newRow);
         newRow = new Row();
         isHandledRow = false;
         event.cancel();
+        //System.out.println(countCordM);
     }
 
     @EventHandler
@@ -561,6 +637,13 @@ public class BlockBreakFinder extends Module {
         }
         return;
     }
+
+
+//    @EventHandler
+//    public void onMessageEvent(CoreProtectEvent.Message event){
+//        System.out.println("ивент "+event.type.name());
+//    }
+
 
     @EventHandler
     public void onSystemMessage(CoreProtectEvent.System event){
@@ -585,6 +668,7 @@ public class BlockBreakFinder extends Module {
 
     @EventHandler
     public void onPagesEvent(CoreProtectEvent.SystemPages event){
+        if(!isStarted || rows.isEmpty())return;
         //if(event.type == MessagesTypes.systemPages){
             pageNow++;
             isHandledEndMessage = true;
@@ -620,8 +704,9 @@ public class BlockBreakFinder extends Module {
         }
         String users = " u:";
         if(usersToLookupSetting.get()!=null && !usersToLookupSetting.get().isEmpty()){
+            int i = 0;
             for(String username :  usersToLookupSetting.get()){
-                users=users+ username;
+                users=users + username+(i==usersToLookupSetting.get().size()-1 ? "" : ",");
             }
         }
         else{
@@ -642,24 +727,35 @@ public class BlockBreakFinder extends Module {
             command = command + " #count";
             isSentCountCommand=true;
             mc.player.sendOverlayMessage(Component.literal("Send coreprotect #count lookup").withColor(TextColor.GREEN));
-
+            sendCommand(command);
         }
         else{
-            isSentLookupCommand=true;
-            mc.player.sendOverlayMessage(Component.literal("Send coreprotect lookup command").withColor(TextColor.GREEN));
+
+            if(isHandledRowsCountMessage) {
+                mc.player.sendOverlayMessage(Component.literal("Send coreprotect lookup command").withColor(TextColor.GREEN));
+                sendCommand(command);
+                isSentLookupCommand=true;
+            }
         }
-        if(command.length()>255){
-            mc.player.sendSystemMessage(Component.literal("Error, command size cant be more that 255").withColor(TextColor.RED));
-            return;
-        }
-        mc.player.connection.sendCommand(command);
+
+
+        //mc.player.connection.sendCommand(command);
 
         startTicks=0;
         commandCooldown=0;
     }
 
 
-
+    public void sendCommand(String command){
+        if(command.length()>255){
+            mc.player.sendSystemMessage(Component.literal("Error, command size cant be more that 255").withColor(TextColor.RED));
+            return;
+        }
+        if(mc != null && mc.player != null) {
+            mc.player.connection.sendCommand(command);
+            commandCooldown = 0;
+        }
+    }
 
 
 
@@ -667,9 +763,11 @@ public class BlockBreakFinder extends Module {
 //        if(pageNow == maxPages-1){
 //            pageNow++;
 //        }
-        mc.player.connection.sendCommand("co l "+pageNow);
-        mc.player.sendOverlayMessage(Component.literal("Получил страницу "+pageNow).withColor(TextColor.GREEN));
-        commandCooldown=0;
+        if(mc != null && mc.player != null) {
+            mc.player.connection.sendCommand("co l " + pageNow);
+            mc.player.sendOverlayMessage(Component.literal("Получил страницу " + pageNow).withColor(TextColor.GREEN));
+            commandCooldown = 0;
+        }
     }
 
 
@@ -780,6 +878,7 @@ public class BlockBreakFinder extends Module {
         for(Vein vein : veinsArrayList){
             if(vein.isRemoved)continue;
             vein.id=id;
+
             id++;
         }
         //veinsHashSet.clear();
@@ -787,20 +886,29 @@ public class BlockBreakFinder extends Module {
     }
 
     public static void deleteVein(Vein vein){
-        //veinsHashSet.remove(vein);
         veinsArrayList.remove(vein);
         updateVeinsIds();
+        getNewESPBlocks(vein.rows.getFirst().getUser());
     }
 
     public static void removePlayer(String username){
         ArrayList<Vein>newVeins =  new ArrayList<>();
+        int count = 0;
         for(Vein vein : veinsArrayList){
             if(!vein.rows.getFirst().getUser().equals(username)){
                 newVeins.add(vein);
             }
+            else{
+                if(vein.id<=veinNow) {
+                    count++;
+                }
+            }
         }
         veinsArrayList=newVeins;
+        veinNow-=count;
         updateVeinsIds();
+        Modules.get().get(BlockBreakFinder.class).nextVein();
+        //nextVein();
         //veinsHashSet.clear();
         //veinsHashSet.addAll(veinsArrayList);
     }
